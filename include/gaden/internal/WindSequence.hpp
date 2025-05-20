@@ -9,16 +9,28 @@ namespace gaden
     class WindSequence
     {
     public:
-        WindSequence(const std::vector<std::filesystem::path>& files, size_t numCells, bool loop);
+        struct LoopConfig
+        {
+            bool loop = false;
+            size_t from = 0;
+            size_t to = 0;
+        };
+
+    public:
+        void Initialize(const std::vector<std::filesystem::path>& files, size_t numCells, LoopConfig loopConf);
         std::vector<Vector3>& GetCurrent();
+        const std::vector<Vector3>& GetCurrent() const;
         void AdvanceTimeStep();
+        void SetCurrent(size_t index);
 
     private:
         ReadResult parseFile(const std::filesystem::path& path, std::vector<Vector3>& map);
 
+    public:
+        LoopConfig loopConfig;
+
     private:
         std::vector<std::vector<Vector3>> windMaps;
         size_t indexCurrent;
-        bool looping;
     };
 } // namespace gaden

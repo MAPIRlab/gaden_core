@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GadenVersion.hpp"
+#include "core/GadenVersion.hpp"
 #include "core/ReadResult.hpp"
 #include "core/Vectors.hpp"
 #include <cstdint>
@@ -8,6 +8,7 @@
 
 namespace gaden
 {
+    // represents the environment geometry (obstacles and outlets), without any information about gas/wind
     class Environment
     {
     public:
@@ -22,16 +23,19 @@ namespace gaden
         struct Description
         {
             Vector3i dimensions;
-            Vector3 min_coord; //[m]
-            Vector3 max_coord; //[m]
-            float cell_size;   //[m]
+            Vector3 minCoord; //[m]
+            Vector3 maxCoord; //[m]
+            float cellSize;   //[m]
         };
 
     public:
         size_t numCells() const;
+        size_t indexFrom3D(Vector3i indices) const;
 
-        Environment::CellState& at(const Vector3i& indices);
-        CellState& at(const Vector3& point);
+        bool IsInBounds(const Vector3& point) const;
+        bool IsInBounds(const Vector3i& indices) const;
+        CellState at(const Vector3i& indices) const;
+        CellState at(const Vector3& point) const;
 
         Vector3i coordsToIndices(const Vector3& coords) const;
         Vector3 coordsOfCellCenter(const Vector3i& indices) const;
@@ -44,7 +48,7 @@ namespace gaden
 
         Description description;
 
-        std::vector<CellState> Env;
+        std::vector<CellState> cells;
 
     private:
     };

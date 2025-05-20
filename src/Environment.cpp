@@ -1,7 +1,7 @@
 #include <fstream>
 #include <gaden/Environment.hpp>
 #include <gaden/core/Logging.hpp>
-#include <gaden/core/Utils.hpp>
+#include <gaden/internal/Utils.hpp>
 
 namespace gaden
 {
@@ -11,29 +11,49 @@ namespace gaden
         return description.dimensions.x * description.dimensions.y * description.dimensions.z;
     }
 
-    Environment::CellState& Environment::at(const Vector3i& indices)
+    size_t Environment::indexFrom3D(Vector3i indices) const
     {
-        return (CellState&)Env[indexFrom3D(indices, description.dimensions)];
+        return ::gaden::indexFrom3D(indices, description.dimensions);
     }
 
-    Environment::CellState& Environment::at(const Vector3& point)
+    bool Environment::IsInBounds(const Vector3& point) const
+    {
+        return IsInBounds(coordsToIndices(point));
+    }
+
+    bool Environment::IsInBounds(const Vector3i& indices) const
+    {
+        return InRange(indices.x, 0, description.dimensions.x) && //
+               InRange(indices.y, 0, description.dimensions.y) && //
+               InRange(indices.z, 0, description.dimensions.z);
+    }
+
+    Environment::CellState Environment::at(const Vector3i& indices) const
+    {
+        if (!IsInBounds(indices))
+            return CellState::OutOfBounds;
+
+        return (CellState&)cells.at(indexFrom3D(indices));
+    }
+
+    Environment::CellState Environment::at(const Vector3& point) const
     {
         return at(coordsToIndices(point));
     }
 
     Vector3i Environment::coordsToIndices(const Vector3& coords) const
     {
-        return (coords - description.min_coord) / description.cell_size;
+        return (coords - description.minCoord) / description.cellSize;
     }
 
     Vector3 Environment::coordsOfCellCenter(const Vector3i& indices) const
     {
-        return description.min_coord + (static_cast<Vector3>(indices) + 0.5f) * description.cell_size;
+        return description.minCoord + (static_cast<Vector3>(indices) + 0.5f) * description.cellSize;
     }
 
     Vector3 Environment::coordsOfCellOrigin(const Vector3i& indices) const
     {
-        return description.min_coord + (static_cast<Vector3>(indices)) * description.cell_size;
+        return description.minCoord + (static_cast<Vector3>(indices)) * description.cellSize;
     }
 
     ReadResult Environment::ReadFromFile(const std::filesystem::path& filePath)
@@ -54,22 +74,22 @@ namespace gaden
                 size_t pos = line.find(" ");
                 line.erase(0, pos + 1);
                 pos = line.find(" ");
-                description.min_coord.x = atof(line.substr(0, pos).c_str());
+                description.minCoord.x = atof(line.substr(0, pos).c_str());
                 line.erase(0, pos + 1);
                 pos = line.find(" ");
-                description.min_coord.y = atof(line.substr(0, pos).c_str());
-                description.min_coord.z = atof(line.substr(pos + 1).c_str());
+                description.minCoord.y = atof(line.substr(0, pos).c_str());
+                description.minCoord.z = atof(line.substr(pos + 1).c_str());
 
                 // Line 2 (max values of environment)
                 std::getline(infile, line);
                 pos = line.find(" ");
                 line.erase(0, pos + 1);
                 pos = line.find(" ");
-                description.max_coord.x = atof(line.substr(0, pos).c_str());
+                description.maxCoord.x = atof(line.substr(0, pos).c_str());
                 line.erase(0, pos + 1);
                 pos = line.find(" ");
-                description.max_coord.y = atof(line.substr(0, pos).c_str());
-                description.max_coord.z = atof(line.substr(pos + 1).c_str());
+                description.maxCoord.y = atof(line.substr(0, pos).c_str());
+                description.maxCoord.z = atof(line.substr(pos + 1).c_str());
 
                 // Line 3 (Num cells on eahc dimension)
                 std::getline(infile, line);
@@ -85,10 +105,10 @@ namespace gaden
                 // Line 4 cell_size (m)
                 std::getline(infile, line);
                 pos = line.find(" ");
-                description.cell_size = atof(line.substr(pos + 1).c_str());
+                description.cellSize = atof(line.substr(pos + 1).c_str());
             }
 
-            Env.resize(description.dimensions.x * description.dimensions.y * description.dimensions.z);
+            cells.resize(description.dimensions.x * description.dimensions.y * description.dimensions.z);
 
             int x_idx = 0;
             int y_idx = 0;
@@ -118,7 +138,7 @@ namespace gaden
                         ss >> std::skipws >> f;
                         if (!ss.fail())
                         {
-                            Env[indexFrom3D(Vector3i(x_idx, y_idx, z_idx), description.dimensions)] = static_cast<CellState>(f);
+                            cells[indexFrom3D(Vector3i(x_idx, y_idx, z_idx))] = static_cast<CellState>(f);
                             y_idx++;
                         }
                     }

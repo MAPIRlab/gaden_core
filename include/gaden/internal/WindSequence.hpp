@@ -18,10 +18,11 @@ namespace gaden
 
     public:
         void Initialize(const std::vector<std::filesystem::path>& files, size_t numCells, LoopConfig loopConf);
+        void AdvanceTimeStep();
         std::vector<Vector3>& GetCurrent();
         const std::vector<Vector3>& GetCurrent() const;
-        void AdvanceTimeStep();
-        void SetCurrent(size_t index);
+        size_t GetCurrentIndex();
+        void SetCurrentIndex(size_t index);
 
     private:
         ReadResult parseFile(const std::filesystem::path& path, std::vector<Vector3>& map);

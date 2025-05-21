@@ -8,5 +8,6 @@ namespace gaden
     {
         Vector3 position;
         float sigma;
+        bool active = true;
     };
 }

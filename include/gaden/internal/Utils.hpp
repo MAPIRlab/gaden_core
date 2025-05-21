@@ -23,5 +23,10 @@ namespace gaden
         return mean + dist(engine) * stdDev;
     }
 
-    
+    inline float uniformRandom(float min, float max)
+    {
+        static thread_local std::mt19937 engine;
+        static thread_local std::uniform_real_distribution<float> distribution{0.0, 1.0};
+        return min + distribution(engine) * (max - min);
+    }
 } // namespace gaden

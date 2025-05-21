@@ -1,0 +1,4 @@
+- Building and environment (Q1): Not that related, but they publish a lot of GSL stuff
+- SoftwareX (Q2): A pretty good match.
+- International Journal of Simulation Modelling (Q2): Does publish articles about simulation software.
+- International Journal of Modeling Simulation and Scientific Computing (Q3): Maybe, but they don't seem to publish about software tools very much.

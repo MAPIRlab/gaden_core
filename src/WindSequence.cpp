@@ -39,6 +39,11 @@ namespace gaden
         return windMaps[indexCurrent];
     }
 
+    size_t WindSequence::GetCurrentIndex()
+    {
+        return indexCurrent;
+    }
+
     void WindSequence::AdvanceTimeStep()
     {
         indexCurrent++;
@@ -48,7 +53,7 @@ namespace gaden
             indexCurrent = windMaps.size() - 1;
     }
 
-    void WindSequence::SetCurrent(size_t index)
+    void WindSequence::SetCurrentIndex(size_t index)
     {
         if (InRange(index, 0, windMaps.size()))
             indexCurrent = index;

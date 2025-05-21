@@ -28,15 +28,12 @@ namespace gaden
                InRange(indices.z, 0, description.dimensions.z);
     }
 
-    Environment::CellState Environment::at(const Vector3i& indices) const
+    Environment::CellState& Environment::at(const Vector3i& indices) const
     {
-        if (!IsInBounds(indices))
-            return CellState::OutOfBounds;
-
         return (CellState&)cells.at(indexFrom3D(indices));
     }
 
-    Environment::CellState Environment::at(const Vector3& point) const
+    Environment::CellState& Environment::at(const Vector3& point) const
     {
         return at(coordsToIndices(point));
     }

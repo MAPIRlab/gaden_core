@@ -14,10 +14,11 @@ namespace gaden
     public:
         enum class CellState : uint8_t
         {
-            Free = 0,       // cell is empty, gas can be here
-            Obstacle = 1,   // cell is occupied by an obstacle, no filaments can go through it
-            Outlet = 2,     // if a filament enters this cell it is removed from the simulation
-            OutOfBounds = 3 // invalid cell, position is out of the map bounds
+            Free = 0,        // cell is empty, gas can be here
+            Obstacle = 1,    // cell is occupied by an obstacle, no filaments can go through it
+            Outlet = 2,      // if a filament enters this cell it is removed from the simulation
+            OutOfBounds = 3, // invalid cell, position is out of the map bounds
+            Uninitialized = 255
         };
 
         struct Description
@@ -34,8 +35,8 @@ namespace gaden
 
         bool IsInBounds(const Vector3& point) const;
         bool IsInBounds(const Vector3i& indices) const;
-        CellState at(const Vector3i& indices) const;
-        CellState at(const Vector3& point) const;
+        CellState& at(const Vector3i& indices) const;
+        CellState& at(const Vector3& point) const;
 
         Vector3i coordsToIndices(const Vector3& coords) const;
         Vector3 coordsOfCellCenter(const Vector3i& indices) const;

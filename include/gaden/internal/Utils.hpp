@@ -29,4 +29,9 @@ namespace gaden
         static thread_local std::uniform_real_distribution<float> distribution{0.0, 1.0};
         return min + distribution(engine) * (max - min);
     }
+
+    inline bool Approx(float x, float y, float epsilon=1e-5)
+    {
+        return std::abs(x - y) < epsilon;
+    }
 } // namespace gaden

@@ -66,7 +66,7 @@ namespace gaden
         {
             Vector3 randomOffset = config.environment.description.cellSize * Vector3{uniformRandom(-1, 1), uniformRandom(-1, 1), uniformRandom(-1, 1)};
             Vector3 position = parameters.sourcePosition + randomOffset;
-            activeFilaments->push_back({.position = position, .sigma = parameters.filament_initial_sigma});
+            activeFilaments->emplace_back(position, parameters.filament_initial_sigma);
         }
     }
 
@@ -183,7 +183,7 @@ namespace gaden
         last_saved_step++;
 
         // Configure file name for saving the current snapshot
-        std::string out_filename = fmt::format("{}/simulations/{}/iteration_{}", config.path.c_str(), parameters.simulationID, last_saved_step); 
+        std::string out_filename = fmt::format("{}/simulations/{}/iteration_{}", config.path.c_str(), parameters.simulationID, last_saved_step);
 
         // check we can create the file
         FILE* file = fopen(out_filename.c_str(), "wb");

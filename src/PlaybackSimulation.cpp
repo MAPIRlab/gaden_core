@@ -13,7 +13,7 @@ namespace gaden
 
     void PlaybackSimulation::AdvanceTimestep()
     {
-        std::string filename = fmt::format("{}/iteration_{}", parameters.simulationDirectory, currentIteration);
+        std::string filename = fmt::format("{}/iteration_{}", parameters.simulationDirectory.c_str(), currentIteration);
         if (!std::filesystem::exists(filename))
         {
             GADEN_ERROR("File '{}' does not exist!", filename.c_str());

@@ -71,19 +71,59 @@ namespace gaden
             std::ifstream infile(path, std::ios_base::binary);
 
             // header
-            int fileVersionMajor, fileVersionMinor;
+            int fileVersionMajor;
             infile.read((char*)&fileVersionMajor, sizeof(int));
-            infile.read((char*)&fileVersionMinor, sizeof(int));
+
+            // the old style of preprocessed-but-not-simulated wind files always started with a 4-byte 999 (which was not really a gaden version, but whatever)
+            if (fileVersionMajor == 999)
+            {
+                GADEN_ERROR("The old style wind files (split into three files with suffixes like _U, _V, _W) are no longer supported. Please convert the files to the new format");
+                return ReadResult::READING_FAILED;
+            }
+            else if (fileVersionMajor == 2)
+                parseModernFile(infile, map);
+            else
+                parseOldFile(infile, map);
 
             // contents
-            infile.read((char*)map.data(), sizeof(gaden::Vector3) * map.size());
             infile.close();
             return ReadResult::OK;
         }
         catch (const std::exception& e)
         {
-            GADEN_ERROR("Exception when parsing wind file '{}' : '{}'", path, e.what());
+            GADEN_ERROR("Exception when parsing wind file '{}' : '{}'", path.c_str(), e.what());
             return ReadResult::READING_FAILED;
         }
+    }
+
+    void WindSequence::parseModernFile(std::ifstream& infile, std::vector<Vector3>& map)
+    {
+        int fileVersionMinor;
+        infile.read((char*)&fileVersionMinor, sizeof(int));
+        infile.read((char*)map.data(), sizeof(gaden::Vector3) * map.size());
+    }
+
+    void WindSequence::parseOldFile(std::ifstream& infile, std::vector<Vector3>& map)
+    {
+        // these files have three consecutive arrays of doubles, one for each component
+        for (size_t i = 0; i < map.size(); i++)
+        {
+            double aux;
+            infile.read((char*)&aux, sizeof(double));
+            map[i].x = aux;
+        }
+        for (size_t i = 0; i < map.size(); i++)
+        {
+            double aux;
+            infile.read((char*)&aux, sizeof(double));
+            map[i].y = aux;
+        }
+        for (size_t i = 0; i < map.size(); i++)
+        {
+            double aux;
+            infile.read((char*)&aux, sizeof(double));
+            map[i].z = aux;
+        }
+        infile.close();
     }
 } // namespace gaden

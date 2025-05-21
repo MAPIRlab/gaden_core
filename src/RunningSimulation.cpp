@@ -3,17 +3,15 @@
 #include "gaden/internal/BufferUtils.hpp"
 #include "gaden/internal/Utils.hpp"
 #include <fstream>
-#include <zlib.h>
+#include <gaden/internal/compression.hpp>
 
 namespace gaden
 {
 
-    RunningSimulation::RunningSimulation(Parameters params, EnvironmentConfiguration config, WindSequence::LoopConfig loopConfig)
-        : parameters(params)
+    RunningSimulation::RunningSimulation(Parameters params, EnvironmentConfiguration configuration, LoopConfig loopConfig)
+        : parameters(params), Simulation(configuration)
     {
-        environment = config.environment;
-        windSequence = config.windSequence;
-        windSequence.loopConfig = loopConfig;
+        config.windSequence.loopConfig = loopConfig;
 
         filaments1.reserve(params.expectedNumIterations * params.numFilaments_sec / params.deltaTime);
         filaments2.reserve(params.expectedNumIterations * params.numFilaments_sec / params.deltaTime);
@@ -46,7 +44,7 @@ namespace gaden
 
         static float lastWindUpdateTime = 0.0;
         if (currentTime > lastWindUpdateTime + parameters.windIterationDeltaTime)
-            windSequence.AdvanceTimeStep();
+            config.windSequence.AdvanceTimeStep();
 
         currentTime += parameters.deltaTime;
         currentIteration++;
@@ -66,7 +64,7 @@ namespace gaden
 
         for (size_t i = 0; i < accumulator; i++)
         {
-            Vector3 randomOffset = environment.description.cellSize * Vector3{uniformRandom(-1, 1), uniformRandom(-1, 1), uniformRandom(-1, 1)};
+            Vector3 randomOffset = config.environment.description.cellSize * Vector3{uniformRandom(-1, 1), uniformRandom(-1, 1), uniformRandom(-1, 1)};
             Vector3 position = parameters.sourcePosition + randomOffset;
             activeFilaments->push_back({.position = position, .sigma = parameters.filament_initial_sigma});
         }
@@ -100,12 +98,12 @@ namespace gaden
         try
         {
             // Get 3D cell of the filament center
-            Vector3i cellIdx = (filament.position - environment.description.minCoord) / environment.description.cellSize;
+            Vector3i cellIdx = (filament.position - config.environment.description.minCoord) / config.environment.description.cellSize;
 
             // 1. Simulate Advection (Va)
             //    Large scale wind-eddies -> Movement of a filament as a whole by wind
             //------------------------------------------------------------------------
-            const gaden::Vector3& windVec = windSequence.GetCurrent().at(environment.indexFrom3D(cellIdx));
+            const gaden::Vector3& windVec = config.windSequence.GetCurrent().at(config.environment.indexFrom3D(cellIdx));
             Vector3 newPosition = filament.position + windVec * parameters.deltaTime;
 
             // 2. Simulate Gravity & Bouyant Force
@@ -157,7 +155,7 @@ namespace gaden
         movementDir = vmath::normalized(movementDir);
 
         // Traverse path
-        int steps = ceil(distance / environment.description.cellSize); // Make sure no two iteration steps are separated more than 1 cell
+        int steps = ceil(distance / config.environment.description.cellSize); // Make sure no two iteration steps are separated more than 1 cell
         float increment = distance / steps;
 
         for (int i = 0; i < steps; i++)
@@ -167,7 +165,7 @@ namespace gaden
             filament.position += movementDir * increment;
 
             // Check if the cell is occupied
-            Environment::CellState cellState = environment.at(filament.position);
+            Environment::CellState cellState = config.environment.at(filament.position);
             if (cellState != Environment::CellState::Free)
             {
                 filament.position = previous;
@@ -185,13 +183,13 @@ namespace gaden
         last_saved_step++;
 
         // Configure file name for saving the current snapshot
-        std::string out_filename = fmt::format("{}/iteration_{}", parameters.saveResultsLocation, last_saved_step);
+        std::string out_filename = fmt::format("{}/simulations/{}/iteration_{}", config.path.c_str(), parameters.simulationID, last_saved_step); 
 
         // check we can create the file
         FILE* file = fopen(out_filename.c_str(), "wb");
         if (file == NULL)
         {
-            GADEN_WARN("CANNOT OPEN LOG FILE\n");
+            GADEN_WARN("Cannot create log file '{}'", out_filename);
             exit(1);
         }
         fclose(file);
@@ -203,11 +201,11 @@ namespace gaden
         writer.Write(&gaden::version_major);
         writer.Write(&gaden::version_minor);
 
-        writer.Write(&environment.description);
+        writer.Write(&config.environment.description);
 
         writer.Write(&simulationMetadata);
 
-        writer.Write(&windSequence.GetCurrent()); // index of the wind file (they are stored separately under (results_location)/wind/... )
+        writer.Write(&config.windSequence.GetCurrent()); // index of the wind file (they are stored separately under (results_location)/wind/... )
 
         for (int i = 0; i < activeFilaments->size(); i++)
         {
@@ -218,8 +216,8 @@ namespace gaden
 
         // compression with zlib
         static std::vector<uint8_t> compressedBuffer(5e6);
-        uLongf destLength = compressedBuffer.size();
-        compress2(compressedBuffer.data(), &destLength, rawBuffer.data(), rawBuffer.size(), Z_DEFAULT_COMPRESSION);
+        zlib::uLongf destLength = compressedBuffer.size();
+        zlib::compress2(compressedBuffer.data(), &destLength, rawBuffer.data(), rawBuffer.size(), Z_DEFAULT_COMPRESSION);
 
         // write to disk
         std::ofstream results_file(out_filename);

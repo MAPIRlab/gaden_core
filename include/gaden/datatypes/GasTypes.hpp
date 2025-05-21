@@ -1,11 +1,11 @@
 #pragma once
 
-#include <cstdint>
-
 namespace gaden
 {
     // clang-format off
-    enum class GasType : int8_t
+
+    // we need to keep the backing type as int to avoid breaking the binary serialization
+    enum class GasType : int
     {
         unknown             = -1, // something is wrong in the config/results file
         ethanol             = 0,
@@ -25,12 +25,11 @@ namespace gaden
     };
     // clang-format on
 
+    // Molecular gas mass [g/mol]
+    // SpecificGravity(Air) = 1 (as reference)
+    // Specific gravity is the ratio of the density of a substance to the density of a reference substance; equivalently,
+    // it is the ratio of the mass of a substance to the mass of a reference substance for the same given volume.
     constexpr float SpecificGravity[14] = {
-
-        // Molecular gas mass [g/mol]
-        // SpecificGravity(Air) = 1 (as reference)
-        // Specific gravity is the ratio of the density of a substance to the density of a reference substance; equivalently,
-        // it is the ratio of the mass of a substance to the mass of a reference substance for the same given volume.
         1.0378, // ethanol   (heavier than air)
         0.5537, // methane   (lighter than air)
         0.0696, // hydrogen  (lighter than air)

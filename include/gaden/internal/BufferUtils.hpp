@@ -59,12 +59,23 @@ namespace gaden
         template <typename T>
         void Read(T* address, size_t size)
         {
+            memcpy(address, current, size);
             current += size;
         }
 
         size_t currentOffset()
         {
             return current - start;
+        }
+
+        void AdvancePointer(size_t offset)
+        {
+            current += offset;
+        }
+
+        bool Ended()
+        {
+            return current == end;
         }
 
     private:

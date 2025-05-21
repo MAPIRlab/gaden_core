@@ -25,11 +25,11 @@ namespace gaden
             // you can query the simulation as it runs, or store the state of the gas dispersion to disk and play it back later
             bool saveResults = false;
             float saveDeltaTime = 0.5;
-            std::filesystem::path saveResultsLocation;
+            std::string simulationID = "sim1"; // used to name the directory in which the results are stored
         };
 
     public:
-        RunningSimulation(Parameters params, EnvironmentConfiguration config, WindSequence::LoopConfig loopConfig);
+        RunningSimulation(Parameters params, EnvironmentConfiguration config, LoopConfig loopConfig);
         void AdvanceTimestep() override;
         const std::vector<Filament>& GetFilaments() const override;
 

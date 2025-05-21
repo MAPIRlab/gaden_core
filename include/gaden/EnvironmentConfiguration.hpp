@@ -12,7 +12,7 @@ namespace gaden
     {
         Environment environment;
         WindSequence windSequence;
-        std::filesystem::path path;
+        std::filesystem::path path; // path to the root directory for this configuration. Used to decide where to save results and such
 
         static EnvironmentConfiguration ReadDirectory(const std::filesystem::path& path);
     };
@@ -30,10 +30,14 @@ namespace gaden
         config.environment.ReadFromFile(directory / "Environment.csv");
 
         std::vector<std::filesystem::path> windFiles;
-        for (const auto& file : std::filesystem::directory_iterator(directory / "wind"))
-            windFiles.push_back(file);
+        if (std::filesystem::exists(directory / "wind"))
+            for (const auto& file : std::filesystem::directory_iterator(directory / "wind"))
+                windFiles.push_back(file);
+        else
+            GADEN_WARN("No wind files in directory '{}'", directory.c_str());
+
         config.windSequence.Initialize(windFiles, config.environment.numCells(), {}); // defaults to no looping
-        
+
         return config;
     }
 } // namespace gaden

@@ -6,13 +6,13 @@ namespace gaden
 
     Vector3 Simulation::SampleWind(const Vector3& point) const
     {
-        return SampleWind(environment.coordsToIndices(point));
+        return SampleWind(config.environment.coordsToIndices(point));
     }
 
     bool Simulation::CheckLineOfSight(Vector3 start, Vector3 end) const
     {
         // Check whether one of the points is outside the valid environment or is not free
-        if (environment.at(start) != Environment::CellState::Free || environment.at(end) != Environment::CellState::Free)
+        if (config.environment.at(start) != Environment::CellState::Free || config.environment.at(end) != Environment::CellState::Free)
             return false;
 
         // Calculate displacement vector
@@ -21,7 +21,7 @@ namespace gaden
         vector = vector / distance;
 
         // Traverse path
-        int steps = distance / environment.description.cellSize; // Make sure no two iteration steps are separated more than 1 cell
+        int steps = distance / config.environment.description.cellSize; // Make sure no two iteration steps are separated more than 1 cell
         float increment = distance / steps;
 
         for (int i = 1; i < steps; i++)
@@ -30,7 +30,7 @@ namespace gaden
             Vector3 position = start + vector * (increment * i);
 
             // Check if the cell is occupied
-            if (environment.at(position) != Environment::CellState::Free)
+            if (config.environment.at(position) != Environment::CellState::Free)
                 return false;
         }
 
@@ -56,11 +56,11 @@ namespace gaden
 
     float Simulation::SampleConcentration(const Vector3& samplePoint) const
     {
-        Vector3i indices = environment.coordsToIndices(samplePoint);
+        Vector3i indices = config.environment.coordsToIndices(samplePoint);
 
-        if (indices.x < 0 || indices.x > environment.description.dimensions.x    //
-            || indices.y < 0 || indices.y > environment.description.dimensions.y //
-            || indices.z < 0 || indices.z > environment.description.dimensions.z)
+        if (indices.x < 0 || indices.x > config.environment.description.dimensions.x    //
+            || indices.y < 0 || indices.y > config.environment.description.dimensions.y //
+            || indices.z < 0 || indices.z > config.environment.description.dimensions.z)
         {
             GADEN_ERROR("Requested gas concentration at a point outside the environment {}. Are you using the correct coordinates?", samplePoint);
             return 0;
@@ -83,7 +83,7 @@ namespace gaden
 
     Vector3 Simulation::SampleWind(const Vector3i& indices) const
     {
-        return windSequence.GetCurrent().at(environment.indexFrom3D(indices));
+        return config.windSequence.GetCurrent().at(config.environment.indexFrom3D(indices));
     }
 
 } // namespace gaden

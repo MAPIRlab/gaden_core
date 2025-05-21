@@ -1,8 +1,7 @@
 #pragma once
-#include "gaden/Environment.hpp"
+#include "gaden/EnvironmentConfiguration.hpp"
 #include "gaden/datatypes/Filament.hpp"
 #include "gaden/datatypes/SimulationMetadata.hpp"
-#include "gaden/internal/WindSequence.hpp"
 
 namespace gaden
 {
@@ -11,6 +10,10 @@ namespace gaden
     class Simulation
     {
     public:
+        Simulation(const EnvironmentConfiguration& configuration)
+            : config(configuration)
+        {}
+        
         virtual void AdvanceTimestep() = 0;
         float SampleConcentration(const Vector3& point) const;
 
@@ -24,8 +27,7 @@ namespace gaden
         float CalculateConcentrationSingleFilament(const Filament& filament, const Vector3& samplePoint) const;
 
     public:
-        Environment environment;
-        WindSequence windSequence;
+        EnvironmentConfiguration config;
 
     protected:
         SimulationMetadata simulationMetadata;

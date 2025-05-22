@@ -1,3 +1,4 @@
+#include "gaden/core/GadenVersion.hpp"
 #include "gaden/core/Logging.hpp"
 #include "gaden/internal/Utils.hpp"
 #include <fstream>
@@ -8,15 +9,21 @@ namespace gaden
 
     void WindSequence::Initialize(const std::vector<std::filesystem::path>& files, size_t numCells, LoopConfig loopConf)
     {
-        indexCurrent = 0;
-        loopConfig = loopConf;
-        windMaps.resize(files.size(), std::vector<Vector3>(numCells));
+        std::vector<std::vector<Vector3>> windIterations(files.size());
         for (size_t i = 0; i < files.size(); i++)
         {
             const auto& file = files[i];
-            if (parseFile(file, windMaps[i]) != ReadResult::OK)
+            if (parseFile(file, windIterations.at(i)) != ReadResult::OK)
                 GADEN_TERMINATE;
         }
+        Initialize(windIterations, numCells, loopConf);
+    }
+
+    void WindSequence::Initialize(const std::vector<std::vector<Vector3>>& windIterations, size_t numCells, LoopConfig loopConf)
+    {
+        indexCurrent = 0;
+        loopConfig = loopConf;
+        windMaps = windIterations;
 
         if (loopConfig.loop)
         {
@@ -59,6 +66,29 @@ namespace gaden
             indexCurrent = index;
         else
             GADEN_ERROR("Tried to load wind map {} but only {} exist", index, windMaps.size());
+    }
+
+    bool WindSequence::WriteToFiles(const std::filesystem::path& directory, std::string_view namePrefix)
+    {
+        try
+        {
+            for (size_t i = 0; i < windMaps.size(); i++)
+            {
+                std::ofstream output(directory / fmt::format("{}_{}", namePrefix, i));
+
+                output.write((char*)&gaden::version_major, sizeof(int));
+                output.write((char*)&gaden::version_minor, sizeof(int));
+                output.write((char*)windMaps.at(i).data(), sizeof(gaden::Vector3) * windMaps.at(i).size());
+
+                output.close();
+            }
+        }
+        catch (const std::exception& e)
+        {
+            GADEN_ERROR("Failed to write wind sequence in directory '{}'.\nException: '{}'", directory.c_str(), e.what());
+            return false;
+        }
+        return true;
     }
 
     ReadResult WindSequence::parseFile(const std::filesystem::path& path, std::vector<Vector3>& map)

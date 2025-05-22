@@ -154,4 +154,39 @@ namespace gaden
         infile.close();
         return ReadResult::OK;
     }
+
+    bool Environment::WriteToFile(const std::filesystem::path& path)
+    {
+        std::ofstream outfile(path.c_str());
+        if (!outfile.is_open())
+        {
+            GADEN_ERROR("Could not create output file '{}'", path.c_str());
+            return false;
+        }
+
+        outfile << "#env_min(m) " << description.minCoord.x << " " << description.minCoord.y << " " << description.minCoord.z << "\n";
+        outfile << "#env_max(m) " << description.maxCoord.x << " " << description.maxCoord.y << " " << description.maxCoord.z << "\n";
+        outfile << "#num_cells " << description.dimensions.x << " " << description.dimensions.y << " " << description.dimensions.z << "\n";
+        outfile << "#cell_size(m) " << description.cellSize << "\n";
+        // things are repeated to scale them up (the image is too small!)
+        for (int height = 0; height < description.dimensions.z; height++)
+        {
+            for (int col = 0; col < description.dimensions.x; col++)
+            {
+                for (int row = 0; row < description.dimensions.y; row++)
+                {
+                    CellState state = at(Vector3i{col, row, height});
+                    outfile << (state == CellState::Free ? 0
+                                                         : (state == CellState::Outlet ? 2
+                                                                                       : 1))
+                            << " ";
+                }
+                outfile << "\n";
+            }
+            outfile << ";\n";
+        }
+        outfile.close();
+
+        return true;
+    }
 } // namespace gaden

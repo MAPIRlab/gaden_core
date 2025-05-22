@@ -10,7 +10,9 @@ include_directories(third_party/DDA/third_party/glm)
 
 add_library(gaden 
     src/Environment.cpp
-    src/WindSequence.cpp
-    src/Simulation.cpp
+    src/PlaybackSimulation.cpp
+    src/Preprocessing.cpp
     src/RunningSimulation.cpp
+    src/Simulation.cpp
+    src/WindSequence.cpp
 )

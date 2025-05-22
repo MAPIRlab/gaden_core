@@ -43,6 +43,8 @@ namespace gaden
         Vector3 coordsOfCellOrigin(const Vector3i& indices) const;
         ReadResult ReadFromFile(const std::filesystem::path& filePath);
 
+        bool WriteToFile(const std::filesystem::path& path);
+
     public:
         int versionMajor = gaden::version_major,
             versionMinor = gaden::version_minor; // version of gaden used to generate a log file. Used to figure out how to parse the binary format

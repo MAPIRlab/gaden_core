@@ -44,6 +44,9 @@ namespace gaden
         ReadResult ReadFromFile(const std::filesystem::path& filePath);
 
         bool WriteToFile(const std::filesystem::path& path);
+        bool Write2DSlicePGM(const std::filesystem::path& path, float height, bool blockOutlets);
+        bool WriteROSOccupancyYAML(const std::filesystem::path& path, float height);
+        bool printBasicSimYaml(const std::filesystem::path& path, Vector3 startingPoint);
 
     public:
         int versionMajor = gaden::version_major,
@@ -52,6 +55,7 @@ namespace gaden
         Description description;
 
         std::vector<CellState> cells;
+
 
     private:
     };

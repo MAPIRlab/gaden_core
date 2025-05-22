@@ -2,6 +2,7 @@
 #include <gaden/Environment.hpp>
 #include <gaden/core/Logging.hpp>
 #include <gaden/internal/Utils.hpp>
+#include <yaml-cpp/yaml.h>
 
 namespace gaden
 {
@@ -187,6 +188,125 @@ namespace gaden
         }
         outfile.close();
 
+        return true;
+    }
+
+    bool Environment::Write2DSlicePGM(const std::filesystem::path& path, float height, bool blockOutlets)
+    {
+        try
+        {
+            std::ofstream outfile(path.c_str());
+            outfile << "P2\n"
+                    << description.dimensions.x << " " << description.dimensions.y << "\n"
+                    << "1\n";
+
+            int height = (height - description.minCoord.z) / description.cellSize; // a xy slice of the 3D environment is used as a geometric map for navigation
+            if (height >= description.dimensions.z)
+            {
+                GADEN_ERROR("Cannot print the occupancy map at height {} -- the environment only gets to height {}", height, description.maxCoord.z);
+                return false;
+            }
+            for (int row = description.dimensions.y - 1; row >= 0; row--)
+            {
+                for (int col = 0; col < description.dimensions.x; col++)
+                {
+                    auto& cell = at(Vector3i{col, row, height});
+                    bool outletTerm = cell == CellState::Outlet && !blockOutlets;
+                    outfile << (cell == CellState::Free || outletTerm ? 1 : 0) << " ";
+                }
+                outfile << "\n";
+            }
+            outfile.close();
+        }
+        catch (const std::exception& e)
+        {
+            GADEN_ERROR("Error while trying to write 2D Slice at '{}': '{}'", path.c_str(), e.what());
+            return false;
+        }
+        return true;
+    }
+
+    bool Environment::WriteROSOccupancyYAML(const std::filesystem::path& path, float height)
+    {
+        try
+        {
+            std::ofstream file(path);
+            YAML::Emitter yaml;
+            yaml.SetDoublePrecision(3);
+            yaml << YAML::BeginMap;
+            yaml << YAML::Key << "image" << YAML::Value << "occupancy.pgm";
+            yaml << YAML::Key << "resolution" << YAML::Value << description.cellSize;
+
+            yaml << YAML::Key << "origin" << YAML::Value << YAML::Flow << std::vector<float>{description.minCoord.x, description.minCoord.y, 0.0}; // the third component is yaw, not Z!
+            yaml << YAML::Key << "occupied_thresh" << YAML::Value << 0.9;
+            yaml << YAML::Key << "free_thresh" << YAML::Value << 0.1;
+            yaml << YAML::Key << "negate" << YAML::Value << 0;
+
+            yaml << YAML::EndMap;
+            file << yaml.c_str();
+            file.close();
+        }
+        catch (const std::exception& e)
+        {
+            GADEN_ERROR("Error while trying to write Occupancy YAML at '{}': '{}'", path.c_str(), e.what());
+            return false;
+        }
+        return true;
+    }
+
+    bool Environment::printBasicSimYaml(const std::filesystem::path& path, Vector3 startingPoint)
+    {
+        try
+        {
+            std::ofstream file(path.c_str());
+            YAML::Emitter yaml;
+            yaml.SetDoublePrecision(2);
+            yaml << YAML::BeginMap;
+            yaml << YAML::Key << "map" << YAML::Value << "occupancy.yaml";
+            yaml << YAML::Key << "robots" << YAML::BeginSeq;
+
+            // robot entry
+            {
+                yaml << YAML::BeginMap;
+                yaml << YAML::Key << "name" << YAML::Value << "PioneerP3DX";
+                yaml << YAML::Key << "radius" << YAML::Value << 0.25;
+
+                yaml << YAML::Key << "position" << YAML::Value << YAML::Flow
+                     << YAML::BeginSeq
+                     << startingPoint.x << startingPoint.y << startingPoint.z
+                     << YAML::EndSeq;
+
+                yaml << YAML::Key << "angle" << YAML::Value << 0.0 << YAML::Comment("in radians");
+                yaml << YAML::Key << "sensors" << YAML::BeginSeq;
+
+                // sensor entry
+                {
+                    yaml << YAML::BeginMap;
+                    yaml << YAML::Key << "type" << YAML::Value << "laser";
+                    yaml << YAML::Key << "name" << YAML::Value << "laser_scanner";
+                    yaml << YAML::Key << "minAngleRad" << YAML::Value << -2.2;
+                    yaml << YAML::Key << "maxAngleRad" << YAML::Value << 2.2;
+                    yaml << YAML::Key << "angleResolutionRad" << YAML::Value << 0.07;
+                    yaml << YAML::Key << "minDistance" << YAML::Value << 0.1;
+                    yaml << YAML::Key << "maxDistance" << YAML::Value << 4.0;
+                    yaml << YAML::EndMap;
+                }
+                yaml << YAML::EndSeq;
+
+                yaml << YAML::EndMap;
+            }
+            yaml << YAML::EndSeq;
+
+            yaml << YAML::EndMap;
+
+            file << yaml.c_str();
+            file.close();
+        }
+        catch (const std::exception& e)
+        {
+            GADEN_ERROR("Error while trying to write BasicSim YAML at '{}': '{}'", path.c_str(), e.what());
+            return false;
+        }
         return true;
     }
 } // namespace gaden

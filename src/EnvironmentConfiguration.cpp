@@ -7,7 +7,7 @@ namespace gaden
         EnvironmentConfiguration config;
         if (!std::filesystem::is_directory(directory))
         {
-            GADEN_ERROR("Path '{}' is not a directory.");
+            GADEN_ERROR("Path '{}' is not a directory.", directory.c_str());
             return config;
         }
 

@@ -4,14 +4,14 @@
 #include <fmt/color.h>
 #include <fmt/format.h>
 
-#if USING_ROS
+#if GADEN_ROS
 #include <rclcpp/logging.hpp>
 #endif
 
 namespace gaden
 {
 
-#if USING_ROS
+#if GADEN_ROS
 #ifndef GADEN_LOGGER_ID
 #define GADEN_LOGGER_ID "GADEN" // default, should be redefined per node
 #endif

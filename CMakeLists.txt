@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(gaden)
 set(CMAKE_CXX_STANDARD 20)
 
+find_package(OpenMP)
 
 include_directories(include)
 include_directories(third_party/DDA/include)
@@ -19,4 +20,4 @@ add_library(gaden SHARED
     src/WindSequence.cpp
 )
 
-target_link_libraries(gaden yaml-cpp::yaml-cpp)
+target_link_libraries(gaden yaml-cpp::yaml-cpp OpenMP::OpenMP_CXX)

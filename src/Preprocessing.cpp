@@ -256,18 +256,23 @@ namespace gaden
     void Preprocessing::BoundingBox::Grow(const Vector3& point)
     {
         min.x = std::min(min.x, point.x);
-        min.x = std::min(min.y, point.y);
-        min.x = std::min(min.z, point.z);
+        min.y = std::min(min.y, point.y);
+        min.z = std::min(min.z, point.z);
 
         max.x = std::max(max.x, point.x);
-        max.x = std::max(max.y, point.y);
-        max.x = std::max(max.z, point.z);
+        max.y = std::max(max.y, point.y);
+        max.z = std::max(max.z, point.z);
     }
 
     void Preprocessing::BoundingBox::Grow(const Preprocessing::BoundingBox& other)
     {
-        Grow(other.min);
-        Grow(other.max);
+        min.x = std::min(min.x, other.min.x);
+        min.y = std::min(min.y, other.min.y);
+        min.z = std::min(min.z, other.min.z);
+
+        max.x = std::max(max.x, other.max.x);
+        max.y = std::max(max.y, other.max.y);
+        max.z = std::max(max.z, other.max.z);
     }
 
 } // namespace gaden

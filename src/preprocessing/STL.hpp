@@ -49,6 +49,7 @@ namespace gaden
                     count++;
                 }
             }
+            infile.clear();
             infile.seekg(0, std::ios_base::beg);
 
             // each points[i] contains one the three vertices of triangle i

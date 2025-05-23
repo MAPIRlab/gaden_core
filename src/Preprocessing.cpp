@@ -156,9 +156,9 @@ namespace gaden
         {
             Triangle triangle = triangles.at(i);
             // We try to find all the cells that some triangle goes through
-            Vector3i p1 = triangle.p1 - env.description.minCoord / env.description.cellSize;
-            Vector3i p2 = triangle.p2 - env.description.minCoord / env.description.cellSize;
-            Vector3i p3 = triangle.p3 - env.description.minCoord / env.description.cellSize;
+            Vector3i p1 = env.coordsToIndices(triangle.p1);
+            Vector3i p2 = env.coordsToIndices(triangle.p2);
+            Vector3i p3 = env.coordsToIndices(triangle.p3);
 
             // triangle Bounding Box
             BoundingBox boundingBox{.min = p1, .max = p1};

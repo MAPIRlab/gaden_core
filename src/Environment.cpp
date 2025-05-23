@@ -191,21 +191,22 @@ namespace gaden
         return true;
     }
 
-    bool Environment::Write2DSlicePGM(const std::filesystem::path& path, float height, bool blockOutlets)
+    bool Environment::Write2DSlicePGM(const std::filesystem::path& path, float floorHeight, bool blockOutlets)
     {
         try
         {
+            int height = (floorHeight - description.minCoord.z) / description.cellSize; // a xy slice of the 3D environment is used as a geometric map for navigation
+            if (height < 0 || height >= description.dimensions.z)
+            {
+                GADEN_ERROR("Cannot print the occupancy map at height {} -- the environment only gets from height {} to {}", height, description.minCoord.z, description.maxCoord.z);
+                return false;
+            }
+
             std::ofstream outfile(path.c_str());
             outfile << "P2\n"
                     << description.dimensions.x << " " << description.dimensions.y << "\n"
                     << "1\n";
 
-            int height = (height - description.minCoord.z) / description.cellSize; // a xy slice of the 3D environment is used as a geometric map for navigation
-            if (height >= description.dimensions.z)
-            {
-                GADEN_ERROR("Cannot print the occupancy map at height {} -- the environment only gets to height {}", height, description.maxCoord.z);
-                return false;
-            }
             for (int row = description.dimensions.y - 1; row >= 0; row--)
             {
                 for (int col = 0; col < description.dimensions.x; col++)

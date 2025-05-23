@@ -32,6 +32,7 @@ namespace gaden
         RunningSimulation(Parameters params, EnvironmentConfiguration config, LoopConfig loopConfig);
         void AdvanceTimestep() override;
         const std::vector<Filament>& GetFilaments() const override;
+        float GetCurrentTime() { return currentTime; }
 
     private:
         void AddFilaments();

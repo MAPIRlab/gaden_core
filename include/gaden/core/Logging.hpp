@@ -53,6 +53,14 @@ namespace gaden
 #endif
 
 #define GADEN_ASSERT(cnd) GADEN_ASSERT_MSG(cnd, "")
+#define GADEN_TERMINATE raise(SIGTRAP)
 } // namespace gaden
 
-#define GADEN_TERMINATE raise(SIGTRAP)
+#include <filesystem>
+template <> struct fmt::formatter<std::filesystem::path> : fmt::formatter<std::string>
+{
+    auto format(std::filesystem::path const& v, format_context& ctx)
+    {
+        return fmt::format_to(ctx.out(), "{}", v.c_str());
+    }
+};

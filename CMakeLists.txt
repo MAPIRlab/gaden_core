@@ -9,7 +9,7 @@ include_directories(third_party/DDA/third_party/glm)
 
 add_subdirectory(third_party/yaml-cpp)
 
-add_library(gaden 
+add_library(gaden SHARED
     src/Environment.cpp
     src/EnvironmentConfiguration.cpp
     src/PlaybackSimulation.cpp

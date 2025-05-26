@@ -1,5 +1,7 @@
 #pragma once
 
+#include <gaden/core/Logging.hpp>
+#include <string>
 namespace gaden
 {
     // clang-format off
@@ -45,5 +47,45 @@ namespace gaden
         0.967,  // carbon monoxide
         0.89    // smoke
     };
+
+    inline std::string to_string(GasType type)
+    {
+        switch (type)
+        {
+        case GasType::unknown:
+            return "unknown";
+        case GasType::ethanol:
+            return "ethanol";
+        case GasType::methane:
+            return "methane";
+        case GasType::hydrogen:
+            return "hydrogen";
+        case GasType::propanol:
+            return "propanol";
+        case GasType::chlorine:
+            return "chlorine";
+        case GasType::flurorine:
+            return "flurorine";
+        case GasType::acetone:
+            return "acetone";
+        case GasType::neon:
+            return "neon";
+        case GasType::helium:
+            return "helium";
+        case GasType::biogas:
+            return "biogas";
+        case GasType::butane:
+            return "butane";
+        case GasType::carbonDioxide:
+            return "carbonDioxide";
+        case GasType::carbonMonoxide:
+            return "carbonMonoxide";
+        case GasType::smoke:
+            return "smoke";
+        }
+        
+        GADEN_ERROR("Invalid gas type: {}", (int)type);
+        GADEN_TERMINATE;
+    }
 
 } // namespace gaden

@@ -13,12 +13,12 @@ namespace gaden
 #define GADEN_VERIFY(expression)                                                               \
     {                                                                                          \
         gaden::ReadResult readResult = expression;                                             \
-        if (readResult == ReadResult::NO_FILE)                                                 \
+        if (readResult == gaden::ReadResult::NO_FILE)                                                 \
         {                                                                                      \
             GADEN_ERROR("File could not be found! At '{}':{}", __FILE__, __LINE__);            \
             GADEN_TERMINATE;                                                                   \
         }                                                                                      \
-        else if (readResult == ReadResult::READING_FAILED)                                     \
+        else if (readResult == gaden::ReadResult::READING_FAILED)                                     \
         {                                                                                      \
             GADEN_ERROR("File could not be parsed correctly! At '{}':{}", __FILE__, __LINE__); \
             GADEN_TERMINATE;                                                                   \

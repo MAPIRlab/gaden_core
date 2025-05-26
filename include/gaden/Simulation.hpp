@@ -28,8 +28,6 @@ namespace gaden
 
     public:
         EnvironmentConfiguration config;
-
-    protected:
         SimulationMetadata simulationMetadata;
     };
 } // namespace gaden

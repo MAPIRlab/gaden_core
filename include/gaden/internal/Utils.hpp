@@ -1,6 +1,7 @@
 #pragma once
 #include "gaden/core/Vectors.hpp"
-#include "gaden/datatypes/Filament.hpp"
+#include "gaden/core/Logging.hpp"
+#include <filesystem>
 #include <random>
 
 namespace gaden
@@ -33,5 +34,17 @@ namespace gaden
     inline bool Approx(float x, float y, float epsilon=1e-5)
     {
         return std::abs(x - y) < epsilon;
+    }
+
+    inline void TryCreateDirectory(std::filesystem::path const& path)
+    {
+        if (!std::filesystem::exists(path))
+        {
+            if (!std::filesystem::create_directory(path))
+            {
+                GADEN_WARN("Cannot create directory '{}'", path);
+                GADEN_TERMINATE;
+            }
+        }
     }
 } // namespace gaden

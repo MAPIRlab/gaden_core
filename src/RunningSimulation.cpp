@@ -28,6 +28,9 @@ namespace gaden
 
         float filament_moles_cm3_center = params.filament_ppm_center / 1e6 * simulationMetadata.numMolesAllGasesIncm3;                          //[moles of target gas / cm³]
         simulationMetadata.totalMolesInFilament = filament_moles_cm3_center * (sqrt(8 * pow(M_PI, 3)) * pow(params.filament_initial_sigma, 3)); // total number of moles in a filament
+
+        if (parameters.saveResults)
+            GADEN_INFO("Saving results in directory '{}'", config.path / parameters.simulationID);
     }
 
     void RunningSimulation::AdvanceTimestep()
@@ -68,6 +71,8 @@ namespace gaden
             Vector3 position = parameters.sourcePosition + randomOffset;
             activeFilaments->emplace_back(position, parameters.filament_initial_sigma);
         }
+
+        accumulator = accumulator - std::floor(accumulator);
     }
 
     void RunningSimulation::MoveFilaments()
@@ -98,7 +103,7 @@ namespace gaden
         try
         {
             // Get 3D cell of the filament center
-            Vector3i cellIdx = (filament.position - config.environment.description.minCoord) / config.environment.description.cellSize;
+            Vector3i cellIdx = config.environment.coordsToIndices(filament.position);
 
             // 1. Simulate Advection (Va)
             //    Large scale wind-eddies -> Movement of a filament as a whole by wind
@@ -182,17 +187,12 @@ namespace gaden
         static size_t last_saved_step = 0;
         last_saved_step++;
 
-        // Configure file name for saving the current snapshot
-        std::string out_filename = fmt::format("{}/simulations/{}/iteration_{}", config.path.c_str(), parameters.simulationID, last_saved_step);
-
         // check we can create the file
-        FILE* file = fopen(out_filename.c_str(), "wb");
-        if (file == NULL)
-        {
-            GADEN_WARN("Cannot create log file '{}'", out_filename);
-            exit(1);
-        }
-        fclose(file);
+        TryCreateDirectory(config.path / "gas_simulations");
+        TryCreateDirectory(config.path / "gas_simulations" / parameters.simulationID);
+
+        // Configure file name for saving the current snapshot
+        std::filesystem::path path = fmt::format("{}/gas_simulations/{}/iteration_{}", config.path.c_str(), parameters.simulationID, last_saved_step);
 
         // write all the data as-is into a buffer, which we will then compress
         static std::vector<uint8_t> rawBuffer(5e6);
@@ -217,11 +217,12 @@ namespace gaden
         // compression with zlib
         static std::vector<uint8_t> compressedBuffer(5e6);
         zlib::uLongf destLength = compressedBuffer.size();
-        zlib::compress2(compressedBuffer.data(), &destLength, rawBuffer.data(), rawBuffer.size(), Z_DEFAULT_COMPRESSION);
+        zlib::compress2(compressedBuffer.data(), &destLength, rawBuffer.data(), writer.currentOffset(), Z_DEFAULT_COMPRESSION);
 
         // write to disk
-        std::ofstream results_file(out_filename);
+        std::ofstream results_file(path);
         results_file.write((char*)compressedBuffer.data(), destLength);
+        results_file.close();
     }
 
 } // namespace gaden

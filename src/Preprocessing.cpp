@@ -189,7 +189,7 @@ namespace gaden
                             || triBoxOverlap(cellCenter, triangles[i], halfCellSize))
                         {
                             mtx.lock();
-                            env.at(Vector3i{col, row, height}) = value_to_write;
+                            env.atRef(Vector3i{col, row, height}) = value_to_write;
                             mtx.unlock();
                         }
                     }
@@ -218,7 +218,7 @@ namespace gaden
             Vector3i indices = environment.coordsToIndices(emptyPoint);
 
             q.emplace(indices);
-            environment.at(indices) = Environment::CellState::Free;
+            environment.atRef(indices) = Environment::CellState::Free;
         }
 
         while (!q.empty())
@@ -230,9 +230,9 @@ namespace gaden
             auto compareAndAdd = [&](Vector3i offset)
             {
                 Vector3i currentPoint = oldPoint + offset;
-                if (environment.IsInBounds(currentPoint) && environment.at(currentPoint) == Environment::CellState::Uninitialized)
+                if (environment.at(currentPoint) == Environment::CellState::Uninitialized)
                 {
-                    environment.at(currentPoint) = Environment::CellState::Free;
+                    environment.atRef(currentPoint) = Environment::CellState::Free;
                     q.emplace(currentPoint);
                 }
             };

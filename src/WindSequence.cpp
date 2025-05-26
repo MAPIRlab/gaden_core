@@ -9,7 +9,7 @@ namespace gaden
 
     void WindSequence::Initialize(const std::vector<std::filesystem::path>& files, size_t numCells, LoopConfig loopConf)
     {
-        std::vector<std::vector<Vector3>> windIterations(files.size());
+        std::vector<std::vector<Vector3>> windIterations(files.size(), std::vector<Vector3>(numCells));
         for (size_t i = 0; i < files.size(); i++)
         {
             const auto& file = files[i];
@@ -110,7 +110,7 @@ namespace gaden
                 GADEN_ERROR("The old style wind files (split into three files with suffixes like _U, _V, _W) are no longer supported. Please convert the files to the new format");
                 return ReadResult::READING_FAILED;
             }
-            else if (fileVersionMajor == 2)
+            else if (fileVersionMajor >= 2)
                 parseModernFile(infile, map);
             else
                 parseOldFile(infile, map);

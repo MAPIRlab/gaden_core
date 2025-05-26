@@ -35,8 +35,13 @@ namespace gaden
 
         bool IsInBounds(const Vector3& point) const;
         bool IsInBounds(const Vector3i& indices) const;
-        CellState& at(const Vector3i& indices) const;
-        CellState& at(const Vector3& point) const;
+
+        CellState at(const Vector3i& indices) const;
+        CellState at(const Vector3& point) const;
+        
+        // the reference versions cannot return an OOB value when the indices are wrong! It is the caller's responsibility to check the indices are in bounds first
+        CellState& atRef(const Vector3i& indices) const;
+        CellState& atRef(const Vector3& point) const;
 
         Vector3i coordsToIndices(const Vector3& coords) const;
         Vector3 coordsOfCellCenter(const Vector3i& indices) const;
@@ -59,4 +64,5 @@ namespace gaden
 
     private:
     };
+
 } // namespace gaden

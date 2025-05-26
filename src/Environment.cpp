@@ -29,12 +29,24 @@ namespace gaden
                InRange(indices.z, 0, description.dimensions.z);
     }
 
-    Environment::CellState& Environment::at(const Vector3i& indices) const
+    Environment::CellState& Environment::atRef(const Vector3i& indices) const
     {
         return (CellState&)cells.at(indexFrom3D(indices));
     }
 
-    Environment::CellState& Environment::at(const Vector3& point) const
+    Environment::CellState& Environment::atRef(const Vector3& point) const
+    {
+        return atRef(coordsToIndices(point));
+    }
+
+    Environment::CellState Environment::at(const Vector3i& indices) const
+    {
+        if (!IsInBounds(indices))
+            return CellState::OutOfBounds;
+        return (CellState&)cells.at(indexFrom3D(indices));
+    }
+
+    Environment::CellState Environment::at(const Vector3& point) const
     {
         return at(coordsToIndices(point));
     }
@@ -57,7 +69,10 @@ namespace gaden
     ReadResult Environment::ReadFromFile(const std::filesystem::path& filePath)
     {
         if (!std::filesystem::exists(filePath))
+        {
+            GADEN_ERROR("Could not find environment file '{}'", filePath);
             return ReadResult::NO_FILE;
+        }
 
         std::ifstream infile(filePath.c_str());
         try
@@ -106,7 +121,7 @@ namespace gaden
                 description.cellSize = atof(line.substr(pos + 1).c_str());
             }
 
-            cells.resize(description.dimensions.x * description.dimensions.y * description.dimensions.z);
+            cells.resize(description.dimensions.x * description.dimensions.y * description.dimensions.z, CellState::Uninitialized);
 
             int x_idx = 0;
             int y_idx = 0;
@@ -132,7 +147,7 @@ namespace gaden
                 { // New line with constant x_idx and all the y_idx values
                     while (ss)
                     {
-                        uint8_t f;
+                        int f;
                         ss >> std::skipws >> f;
                         if (!ss.fail())
                         {
@@ -176,7 +191,7 @@ namespace gaden
             {
                 for (int row = 0; row < description.dimensions.y; row++)
                 {
-                    CellState state = at(Vector3i{col, row, height});
+                    CellState state = atRef(Vector3i{col, row, height});
                     outfile << (state == CellState::Free ? 0
                                                          : (state == CellState::Outlet ? 2
                                                                                        : 1))
@@ -211,7 +226,7 @@ namespace gaden
             {
                 for (int col = 0; col < description.dimensions.x; col++)
                 {
-                    auto& cell = at(Vector3i{col, row, height});
+                    auto& cell = atRef(Vector3i{col, row, height});
                     bool outletTerm = cell == CellState::Outlet && !blockOutlets;
                     outfile << (cell == CellState::Free || outletTerm ? 1 : 0) << " ";
                 }

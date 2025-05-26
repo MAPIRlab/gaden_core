@@ -3,6 +3,8 @@
 
 namespace gaden
 {
+    // maximum size that the data can take pre-compression. We fix this here so that the PlaybackSimulation can know the upper bound of the uncompressed size and allocate its buffer accordingly
+    inline constexpr size_t maxBufferSize = 5e6;
 
     class BufferWriter
     {

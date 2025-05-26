@@ -195,7 +195,7 @@ namespace gaden
         std::filesystem::path path = fmt::format("{}/gas_simulations/{}/iteration_{}", config.path.c_str(), parameters.simulationID, last_saved_step);
 
         // write all the data as-is into a buffer, which we will then compress
-        static std::vector<uint8_t> rawBuffer(5e6);
+        static std::vector<uint8_t> rawBuffer(maxBufferSize);
         BufferWriter writer((char*)rawBuffer.data(), rawBuffer.size());
 
         writer.Write(&gaden::version_major);
@@ -215,7 +215,7 @@ namespace gaden
         }
 
         // compression with zlib
-        static std::vector<uint8_t> compressedBuffer(5e6);
+        static std::vector<uint8_t> compressedBuffer(maxBufferSize);
         zlib::uLongf destLength = compressedBuffer.size();
         zlib::compress2(compressedBuffer.data(), &destLength, rawBuffer.data(), writer.currentOffset(), Z_DEFAULT_COMPRESSION);
 

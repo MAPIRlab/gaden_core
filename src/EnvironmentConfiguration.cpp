@@ -1,4 +1,5 @@
 #include "gaden/EnvironmentConfiguration.hpp"
+#include <gaden/internal/Utils.hpp>
 
 namespace gaden
 {
@@ -16,11 +17,8 @@ namespace gaden
         if (config.environment.ReadFromFile(envPath) == ReadResult::NO_FILE)
             GADEN_ERROR("Could not read environment file '{}'", envPath.c_str());
 
-        std::vector<std::filesystem::path> windFiles;
-        if (std::filesystem::exists(directory / "wind"))
-            for (const auto& file : std::filesystem::directory_iterator(directory / "wind"))
-                windFiles.push_back(file);
-        else
+        std::vector<std::filesystem::path> windFiles = GetAllFilesInDirectory(directory / "wind");
+        if (windFiles.empty())
             GADEN_WARN("No wind files in directory '{}'", directory.c_str());
 
         config.windSequence.Initialize(windFiles, config.environment.numCells(), {}); // defaults to no looping

@@ -1,6 +1,7 @@
 #pragma once
-#include "gaden/core/Vectors.hpp"
+#include "gaden/core/Assertions.hpp"
 #include "gaden/core/Logging.hpp"
+#include "gaden/core/Vectors.hpp"
 #include <filesystem>
 #include <random>
 
@@ -31,7 +32,7 @@ namespace gaden
         return min + distribution(engine) * (max - min);
     }
 
-    inline bool Approx(float x, float y, float epsilon=1e-5)
+    inline bool Approx(float x, float y, float epsilon = 1e-5)
     {
         return std::abs(x - y) < epsilon;
     }
@@ -46,5 +47,14 @@ namespace gaden
                 GADEN_TERMINATE;
             }
         }
+    }
+
+    inline std::vector<std::filesystem::path> GetAllFilesInDirectory(std::filesystem::path const& directory)
+    {
+        std::vector<std::filesystem::path> files;
+        if (std::filesystem::exists(directory))
+            for (const auto& file : std::filesystem::directory_iterator(directory))
+                files.push_back(file);
+        return files;
     }
 } // namespace gaden

@@ -14,7 +14,8 @@ namespace gaden
         };
 
     public:
-        PlaybackSimulation(Parameters params, EnvironmentConfiguration config, LoopConfig loopConfig);
+        PlaybackSimulation() = delete;
+        PlaybackSimulation(Parameters params, EnvironmentConfiguration const& config, LoopConfig loopConfig);
         void AdvanceTimestep() override;
         const std::vector<Filament>& GetFilaments() const override;
 

@@ -10,7 +10,7 @@ namespace gaden
         READING_FAILED
     };
 
-#define GADEN_VERIFY(expression)                                                               \
+#define GADEN_CHECK_RESULT(expression)                                                               \
     {                                                                                          \
         gaden::ReadResult readResult = expression;                                             \
         if (readResult == gaden::ReadResult::NO_FILE)                                                 \

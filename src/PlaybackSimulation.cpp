@@ -6,7 +6,7 @@
 namespace gaden
 {
 
-    PlaybackSimulation::PlaybackSimulation(Parameters params, EnvironmentConfiguration config, LoopConfig loopConfig)
+    PlaybackSimulation::PlaybackSimulation(Parameters params, EnvironmentConfiguration const& config, LoopConfig loopConfig)
         : Simulation(config)
     {
     }

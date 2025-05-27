@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gaden/core/Logging.hpp>
+#include <gaden/core/Assertions.hpp>
 #include <string>
 namespace gaden
 {

@@ -7,7 +7,7 @@
 #define GADEN_VERIFY(cnd, msg)                                                                                                                    \
     if (!(cnd))                                                                                                                                   \
     {                                                                                                                                             \
-        GADEN_ERROR("{0}:     At {1}",                                                                                                            \
+        GADEN_ERROR("{0}: At {1}",                                                                                                                \
                     fmt::format(fmt::bg(fmt::terminal_color::red) | fmt::fg(fmt::terminal_color::white) | fmt::emphasis::bold, "ERROR: {}", msg), \
                     fmt::format(fmt::emphasis::bold, "{0}:{1}", __FILE__, __LINE__));                                                             \
         GADEN_TERMINATE;                                                                                                                          \

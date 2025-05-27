@@ -6,8 +6,8 @@
 namespace gaden
 {
 
-    PlaybackSimulation::PlaybackSimulation(Parameters params, EnvironmentConfiguration const& config, LoopConfig loopConfig)
-        : Simulation(config)
+    PlaybackSimulation::PlaybackSimulation(Parameters params, EnvironmentConfiguration const& config)
+        : Simulation(config), parameters(params)
     {
     }
 
@@ -17,6 +17,7 @@ namespace gaden
         if (!std::filesystem::exists(filename))
         {
             GADEN_ERROR("File '{}' does not exist!", filename.c_str());
+            currentIteration++;
             return;
         }
 
@@ -36,20 +37,26 @@ namespace gaden
         BufferReader reader((char*)rawBuffer.data(), bufferSize);
 
         // check the version of gaden used to generate the file
-        reader.Read((char*)&config.environment.versionMajor);
+        reader.Read(&config.environment.versionMajor);
         if (config.environment.versionMajor == 1)
         {
-            config.environment.versionMinor = 0;
+            config.environment.versionMinor = 0; // pre 2.0 files had no minor version
             LoadLogfileVersion1(reader);
         }
         else if (config.environment.versionMajor == 2)
         {
-            reader.Read((char*)&config.environment.versionMinor, sizeof(int));
+            reader.Read(&config.environment.versionMinor, sizeof(int));
             if (config.environment.versionMinor <= 5)
                 LoadLogfileVersionPre2_6(reader);
             else
                 LoadLogfile(reader);
         }
+        else
+        {
+            reader.Read(&config.environment.versionMinor, sizeof(int));
+            LoadLogfile(reader);
+        }
+        currentIteration++;
     }
 
     const std::vector<Filament>& PlaybackSimulation::GetFilaments() const
@@ -59,11 +66,11 @@ namespace gaden
 
     void PlaybackSimulation::LoadLogfile(BufferReader reader)
     {
-        reader.Read((char*)&config.environment.description);
+        reader.Read(&config.environment.description);
         reader.Read(&simulationMetadata);
 
         int windIndex;
-        reader.Read((char*)&windIndex, sizeof(int));
+        reader.Read(&windIndex, sizeof(int));
         config.windSequence.SetCurrentIndex(windIndex);
 
         activeFilaments.clear();
@@ -71,11 +78,11 @@ namespace gaden
         float x, y, z, stdDev;
         while (!reader.Ended())
         {
-            reader.Read((char*)&filament_index, sizeof(int));
-            reader.Read((char*)&x, sizeof(float));
-            reader.Read((char*)&y, sizeof(float));
-            reader.Read((char*)&z, sizeof(float));
-            reader.Read((char*)&stdDev, sizeof(float));
+            reader.Read(&filament_index, sizeof(int));
+            reader.Read(&x, sizeof(float));
+            reader.Read(&y, sizeof(float));
+            reader.Read(&z, sizeof(float));
+            reader.Read(&stdDev, sizeof(float));
 
             activeFilaments.emplace_back(x, y, z, stdDev);
         }
@@ -100,36 +107,36 @@ namespace gaden
 
         // coordinates were initially written as doubles, but we want to read them as floats now, so we need a buffer
         double bufferDoubles[5];
-        reader.Read((char*)&bufferDoubles, 3 * sizeof(double));
+        reader.Read(&bufferDoubles, 3 * sizeof(double));
         config.environment.description.minCoord.x = bufferDoubles[0];
         config.environment.description.minCoord.y = bufferDoubles[1];
         config.environment.description.minCoord.z = bufferDoubles[2];
 
-        reader.Read((char*)&bufferDoubles, 3 * sizeof(double));
+        reader.Read(&bufferDoubles, 3 * sizeof(double));
         config.environment.description.maxCoord.x = bufferDoubles[0];
         config.environment.description.maxCoord.y = bufferDoubles[1];
         config.environment.description.maxCoord.z = bufferDoubles[2];
 
-        reader.Read((char*)&config.environment.description.dimensions.x, sizeof(int));
-        reader.Read((char*)&config.environment.description.dimensions.y, sizeof(int));
-        reader.Read((char*)&config.environment.description.dimensions.z, sizeof(int));
+        reader.Read(&config.environment.description.dimensions.x, sizeof(int));
+        reader.Read(&config.environment.description.dimensions.y, sizeof(int));
+        reader.Read(&config.environment.description.dimensions.z, sizeof(int));
 
-        reader.Read((char*)&bufferDoubles, 3 * sizeof(double));
+        reader.Read(&bufferDoubles, 3 * sizeof(double));
         config.environment.description.cellSize = bufferDoubles[0];
 
-        reader.Read((char*)&bufferDoubles, 3 * sizeof(double)); // ground truth source position, we can ignore it
+        reader.Read(&bufferDoubles, 3 * sizeof(double)); // ground truth source position, we can ignore it
 
         int gas_type_index;
-        reader.Read((char*)&gas_type_index, sizeof(int));
+        reader.Read(&gas_type_index, sizeof(int));
         simulationMetadata.gasType = static_cast<GasType>(gas_type_index);
 
-        reader.Read((char*)bufferDoubles, sizeof(double));
+        reader.Read(bufferDoubles, sizeof(double));
         simulationMetadata.totalMolesInFilament = bufferDoubles[0];
-        reader.Read((char*)bufferDoubles, sizeof(double));
+        reader.Read(bufferDoubles, sizeof(double));
         simulationMetadata.numMolesAllGasesIncm3 = bufferDoubles[0];
 
         int windIndex;
-        reader.Read((char*)&windIndex, sizeof(int));
+        reader.Read(&windIndex, sizeof(int));
         config.windSequence.SetCurrentIndex(windIndex);
 
         activeFilaments.clear();
@@ -137,11 +144,11 @@ namespace gaden
         double x, y, z, stdDev;
         while (!reader.Ended())
         {
-            reader.Read((char*)&filament_index, sizeof(int));
-            reader.Read((char*)&x, sizeof(double));
-            reader.Read((char*)&y, sizeof(double));
-            reader.Read((char*)&z, sizeof(double));
-            reader.Read((char*)&stdDev, sizeof(double));
+            reader.Read(&filament_index, sizeof(int));
+            reader.Read(&x, sizeof(double));
+            reader.Read(&y, sizeof(double));
+            reader.Read(&z, sizeof(double));
+            reader.Read(&stdDev, sizeof(double));
 
             activeFilaments.emplace_back(x, y, z, stdDev);
         }
@@ -149,22 +156,22 @@ namespace gaden
 
     void PlaybackSimulation::LoadLogfileVersionPre2_6(BufferReader reader)
     {
-        reader.Read((char*)&config.environment.description, sizeof(config.environment.description));
+        reader.Read(&config.environment.description, sizeof(config.environment.description));
         gaden::Vector3 source_position;
-        reader.Read((char*)&source_position, sizeof(gaden::Vector3));
+        reader.Read(&source_position, sizeof(gaden::Vector3));
 
         int gas_type_index;
-        reader.Read((char*)&gas_type_index, sizeof(int));
+        reader.Read(&gas_type_index, sizeof(int));
         simulationMetadata.gasType = static_cast<GasType>(gas_type_index);
 
         double aux;
-        reader.Read((char*)&aux, sizeof(double));
+        reader.Read(&aux, sizeof(double));
         simulationMetadata.totalMolesInFilament = aux;
-        reader.Read((char*)&aux, sizeof(double));
+        reader.Read(&aux, sizeof(double));
         simulationMetadata.numMolesAllGasesIncm3 = aux;
 
         int windIndex;
-        reader.Read((char*)&windIndex, sizeof(int));
+        reader.Read(&windIndex, sizeof(int));
         config.windSequence.SetCurrentIndex(windIndex);
 
         activeFilaments.clear();
@@ -172,11 +179,11 @@ namespace gaden
         double x, y, z, stdDev;
         while (!reader.Ended())
         {
-            reader.Read((char*)&filament_index, sizeof(int));
-            reader.Read((char*)&x, sizeof(double));
-            reader.Read((char*)&y, sizeof(double));
-            reader.Read((char*)&z, sizeof(double));
-            reader.Read((char*)&stdDev, sizeof(double));
+            reader.Read(&filament_index, sizeof(int));
+            reader.Read(&x, sizeof(double));
+            reader.Read(&y, sizeof(double));
+            reader.Read(&z, sizeof(double));
+            reader.Read(&stdDev, sizeof(double));
 
             activeFilaments.emplace_back(x, y, z, stdDev);
         }

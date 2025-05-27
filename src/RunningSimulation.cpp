@@ -185,7 +185,6 @@ namespace gaden
     void RunningSimulation::SaveResults()
     {
         static size_t last_saved_step = 0;
-        last_saved_step++;
 
         // check we can create the file
         TryCreateDirectory(config.path / "gas_simulations");
@@ -205,13 +204,14 @@ namespace gaden
 
         writer.Write(&simulationMetadata);
 
-        writer.Write(&config.windSequence.GetCurrent()); // index of the wind file (they are stored separately under (results_location)/wind/... )
+        int windIndex = config.windSequence.GetCurrentIndex();
+        writer.Write(&windIndex); // index of the wind file (they are stored separately under (results_location)/wind/... )
 
         for (int i = 0; i < activeFilaments->size(); i++)
         {
-            writer.Write((char*)&i);
-            writer.Write((char*)&activeFilaments->at(i).position);
-            writer.Write((char*)&activeFilaments->at(i).sigma);
+            writer.Write(&i);
+            writer.Write(&activeFilaments->at(i).position);
+            writer.Write(&activeFilaments->at(i).sigma);
         }
 
         // compression with zlib
@@ -223,6 +223,7 @@ namespace gaden
         std::ofstream results_file(path);
         results_file.write((char*)compressedBuffer.data(), destLength);
         results_file.close();
+        last_saved_step++;
     }
 
 } // namespace gaden

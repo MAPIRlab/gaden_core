@@ -1,6 +1,7 @@
+#include "gaden/core/Assertions.hpp"
 #include "gaden/core/GadenVersion.hpp"
 #include "gaden/core/Logging.hpp"
-#include "gaden/internal/Utils.hpp"
+#include "gaden/internal/MathUtils.hpp"
 #include <fstream>
 #include <gaden/internal/WindSequence.hpp>
 
@@ -89,6 +90,35 @@ namespace gaden
             return false;
         }
         return true;
+    }
+
+    WindSequence WindSequence::CreateUniformWind(const std::filesystem::path& filePath, size_t numCells)
+    {
+        std::vector<std::vector<gaden::Vector3>> windMaps;
+        std::ifstream infile(filePath);
+        std::string line;
+
+        std::vector<gaden::Vector3> timestep(numCells, Vector3{0, 0, 0});
+        while (std::getline(infile, line))
+        {
+            Vector3 v;
+            for (int i = 0; i < 3; i++)
+            {
+                size_t pos = line.find(",");
+                v[i] = (atof(line.substr(0, pos).c_str()));
+                line.erase(0, pos + 1);
+            }
+
+            for (size_t i = 0; i < timestep.size(); i++)
+                    timestep[i] = v;
+
+            windMaps.push_back(timestep);
+        }
+        infile.close();
+
+        WindSequence seq;
+        seq.Initialize(windMaps, numCells, {});
+        return seq;
     }
 
     ReadResult WindSequence::parseFile(const std::filesystem::path& path, std::vector<Vector3>& map)

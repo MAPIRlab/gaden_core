@@ -15,6 +15,7 @@ add_library(gaden SHARED
     src/EnvironmentConfiguration.cpp
     src/PlaybackSimulation.cpp
     src/Preprocessing.cpp
+    src/Project.cpp
     src/RunningSimulation.cpp
     src/Simulation.cpp
     src/WindSequence.cpp

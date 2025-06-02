@@ -19,6 +19,8 @@ namespace gaden
         void SetCurrentIndex(size_t index);
         bool WriteToFiles(const std::filesystem::path& directory, std::string_view namePrefix);
 
+        static WindSequence CreateUniformWind(const std::filesystem::path& filePath, size_t numCells);
+
     private:
         ReadResult parseFile(const std::filesystem::path& path, std::vector<Vector3>& map);
         void parseModernFile(std::ifstream& infile, std::vector<Vector3>& map);

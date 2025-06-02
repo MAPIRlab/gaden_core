@@ -1,8 +1,5 @@
 #pragma once
-#include "gaden/core/Assertions.hpp"
-#include "gaden/core/Logging.hpp"
 #include "gaden/core/Vectors.hpp"
-#include <filesystem>
 #include <random>
 
 namespace gaden
@@ -37,24 +34,5 @@ namespace gaden
         return std::abs(x - y) < epsilon;
     }
 
-    inline void TryCreateDirectory(std::filesystem::path const& path)
-    {
-        if (!std::filesystem::exists(path))
-        {
-            if (!std::filesystem::create_directory(path))
-            {
-                GADEN_WARN("Cannot create directory '{}'", path);
-                GADEN_TERMINATE;
-            }
-        }
-    }
 
-    inline std::vector<std::filesystem::path> GetAllFilesInDirectory(std::filesystem::path const& directory)
-    {
-        std::vector<std::filesystem::path> files;
-        if (std::filesystem::exists(directory))
-            for (const auto& file : std::filesystem::directory_iterator(directory))
-                files.push_back(file);
-        return files;
-    }
 } // namespace gaden

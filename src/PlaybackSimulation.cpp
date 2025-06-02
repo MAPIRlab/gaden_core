@@ -6,9 +6,14 @@
 namespace gaden
 {
 
-    PlaybackSimulation::PlaybackSimulation(Parameters params, EnvironmentConfiguration const& config)
-        : Simulation(config), parameters(params)
+    PlaybackSimulation::PlaybackSimulation(Parameters params, EnvironmentConfiguration const& config, LoopConfig loop)
+        : Simulation(config), parameters(params), loopConfig(loop)
     {
+        if (loopConfig.from > loopConfig.to)
+        {
+            GADEN_ERROR("Incorrect loop configuration {}-{}. Setting loop to false", loopConfig.from, loopConfig.to);
+            loopConfig.loop = false;
+        }
     }
 
     void PlaybackSimulation::AdvanceTimestep()
@@ -57,6 +62,9 @@ namespace gaden
             LoadLogfile(reader);
         }
         currentIteration++;
+
+        if (loopConfig.loop && currentIteration > loopConfig.to)
+            currentIteration = loopConfig.from;
     }
 
     const std::vector<Filament>& PlaybackSimulation::GetFilaments() const

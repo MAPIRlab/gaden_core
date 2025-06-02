@@ -1,7 +1,7 @@
 #include <fstream>
 #include <gaden/Environment.hpp>
 #include <gaden/core/Logging.hpp>
-#include <gaden/internal/Utils.hpp>
+#include <gaden/internal/MathUtils.hpp>
 #include <yaml-cpp/yaml.h>
 
 namespace gaden

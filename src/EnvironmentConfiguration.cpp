@@ -1,32 +1,33 @@
 #include "gaden/EnvironmentConfiguration.hpp"
-#include <gaden/internal/Utils.hpp>
+#include <gaden/internal/PathUtils.hpp>
 
 namespace gaden
 {
-    EnvironmentConfiguration EnvironmentConfiguration::ReadDirectory(const std::filesystem::path& directory)
+    bool EnvironmentConfiguration::ReadDirectory(const std::filesystem::path& directory)
     {
-        EnvironmentConfiguration config;
         if (!std::filesystem::is_directory(directory))
         {
             GADEN_ERROR("Path '{}' is not a directory.", directory.c_str());
-            return config;
+            return false;
         }
 
-        config.path = directory;
         std::filesystem::path envPath = directory / "Environment.csv";
-        if (config.environment.ReadFromFile(envPath) == ReadResult::NO_FILE)
-            GADEN_ERROR("Could not read environment file '{}'", envPath.c_str());
+        if (environment.ReadFromFile(envPath) == ReadResult::NO_FILE)
+        {
+            GADEN_WARN("Could not read environment file '{}'", envPath.c_str());
+            return false;
+        }
 
-        std::vector<std::filesystem::path> windFiles = GetAllFilesInDirectory(directory / "wind");
+        std::vector<std::filesystem::path> windFiles = paths::GetAllFilesInDirectory(directory / "wind");
         if (windFiles.empty())
             GADEN_WARN("No wind files in directory '{}'", directory.c_str());
 
-        config.windSequence.Initialize(windFiles, config.environment.numCells(), {}); // defaults to no looping
+        windSequence.Initialize(windFiles, environment.numCells(), {}); // defaults to no looping
 
-        return config;
+        return true;
     }
 
-    bool EnvironmentConfiguration::WriteToDirectory()
+    bool EnvironmentConfiguration::WriteToDirectory(const std::filesystem::path& path)
     {
         if (!std::filesystem::exists(path))
         {

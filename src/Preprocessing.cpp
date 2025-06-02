@@ -1,5 +1,5 @@
 #include "gaden/Preprocessing.hpp"
-#include "gaden/internal/Utils.hpp"
+#include "gaden/internal/MathUtils.hpp"
 #include "preprocessing/STL.hpp"
 #include "preprocessing/TriangleBoxIntersection.hpp"
 #include <algorithm>

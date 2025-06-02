@@ -2,6 +2,7 @@
 
 #include "gaden/Environment.hpp"
 #include "gaden/core/Logging.hpp"
+#include "gaden/datatypes/Model3D.hpp"
 #include "gaden/internal/WindSequence.hpp"
 
 namespace gaden
@@ -12,11 +13,10 @@ namespace gaden
     {
         Environment environment;
         WindSequence windSequence;
-        std::filesystem::path path; // path to the root directory for this configuration. Used to decide where to save results and such
+        std::vector<Model3D> visualizationModels; // optional data about how to visualize this environment
 
-        bool WriteToDirectory();
-
-        static EnvironmentConfiguration ReadDirectory(const std::filesystem::path& path);
+        bool WriteToDirectory(const std::filesystem::path& path);
+        bool ReadDirectory(const std::filesystem::path& path);
     };
 
 } // namespace gaden

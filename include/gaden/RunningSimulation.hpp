@@ -22,14 +22,19 @@ namespace gaden
             float numFilaments_sec = 100;       // How many filaments to release per second
             size_t expectedNumIterations = 600; // To give initial size to filament vector. If you run the simulator longer than this, there will be a reallocation -- so, bad for performance :_(
 
+            LoopConfig windLoop;
+
             // you can query the simulation as it runs, or store the state of the gas dispersion to disk and play it back later
             bool saveResults = false;
             float saveDeltaTime = 0.5;
+            std::filesystem::path saveDataDirectory;
             std::string simulationID = "sim1"; // used to name the directory in which the results are stored
+
+            void ReadFromYAML(std::filesystem::path const& path);
         };
 
     public:
-        RunningSimulation(Parameters params, EnvironmentConfiguration config, LoopConfig loopConfig);
+        RunningSimulation(Parameters params, EnvironmentConfiguration const& envConfig);
         void AdvanceTimestep() override;
         const std::vector<Filament>& GetFilaments() const override;
         float GetCurrentTime() { return currentTime; }

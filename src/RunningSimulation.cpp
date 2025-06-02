@@ -1,17 +1,20 @@
 #include "gaden/RunningSimulation.hpp"
+#include "YAML_Conversions.hpp"
 #include "gaden/datatypes/GasTypes.hpp"
 #include "gaden/internal/BufferUtils.hpp"
-#include "gaden/internal/Utils.hpp"
+#include "gaden/internal/MathUtils.hpp"
+#include "gaden/internal/PathUtils.hpp"
 #include <fstream>
 #include <gaden/internal/compression.hpp>
+#include <yaml-cpp/yaml.h>
 
 namespace gaden
 {
 
-    RunningSimulation::RunningSimulation(Parameters params, EnvironmentConfiguration configuration, LoopConfig loopConfig)
-        : parameters(params), Simulation(configuration)
+    RunningSimulation::RunningSimulation(Parameters params, EnvironmentConfiguration const& envConfig)
+        : parameters(params), Simulation(envConfig)
     {
-        config.windSequence.loopConfig = loopConfig;
+        config.windSequence.loopConfig = parameters.windLoop;
 
         filaments1.reserve(params.expectedNumIterations * params.numFilaments_sec / params.deltaTime);
         filaments2.reserve(params.expectedNumIterations * params.numFilaments_sec / params.deltaTime);
@@ -30,7 +33,7 @@ namespace gaden
         simulationMetadata.totalMolesInFilament = filament_moles_cm3_center * (sqrt(8 * pow(M_PI, 3)) * pow(params.filament_initial_sigma, 3)); // total number of moles in a filament
 
         if (parameters.saveResults)
-            GADEN_INFO("Saving results in directory '{}'", config.path / parameters.simulationID);
+            GADEN_INFO("Saving results in directory '{}'", parameters.saveDataDirectory / parameters.simulationID);
     }
 
     void RunningSimulation::AdvanceTimestep()
@@ -187,11 +190,11 @@ namespace gaden
         static size_t last_saved_step = 0;
 
         // check we can create the file
-        TryCreateDirectory(config.path / "gas_simulations");
-        TryCreateDirectory(config.path / "gas_simulations" / parameters.simulationID);
+        paths::TryCreateDirectory(parameters.saveDataDirectory / "gas_simulations");
+        paths::TryCreateDirectory(parameters.saveDataDirectory / "gas_simulations" / parameters.simulationID);
 
         // Configure file name for saving the current snapshot
-        std::filesystem::path path = fmt::format("{}/gas_simulations/{}/iteration_{}", config.path.c_str(), parameters.simulationID, last_saved_step);
+        std::filesystem::path path = fmt::format("{}/gas_simulations/{}/iteration_{}", parameters.saveDataDirectory.c_str(), parameters.simulationID, last_saved_step);
 
         // write all the data as-is into a buffer, which we will then compress
         static std::vector<uint8_t> rawBuffer(maxBufferSize);
@@ -224,6 +227,30 @@ namespace gaden
         results_file.write((char*)compressedBuffer.data(), destLength);
         results_file.close();
         last_saved_step++;
+    }
+
+    void RunningSimulation::Parameters::ReadFromYAML(std::filesystem::path const& path)
+    {
+        const YAML::Node yaml = YAML::LoadFile(path);
+
+        // clang-format off
+        FromYAML<GasType>   (yaml, "gasType",                   gasType);
+        FromYAML<Vector3>   (yaml, "sourcePosition",            sourcePosition);
+        FromYAML<float>     (yaml, "deltaTime",                 deltaTime);
+        FromYAML<float>     (yaml, "windIterationDeltaTime",    windIterationDeltaTime);
+        FromYAML<float>     (yaml, "temperature",               temperature);
+        FromYAML<float>     (yaml, "pressure",                  pressure);
+        FromYAML<float>     (yaml, "filament_ppm_center",       filament_ppm_center);
+        FromYAML<float>     (yaml, "filament_initial_sigma",    filament_initial_sigma);
+        FromYAML<float>     (yaml, "filament_growth_gamma",     filament_growth_gamma);
+        FromYAML<float>     (yaml, "filament_noise_std",        filament_noise_std);
+        FromYAML<float>     (yaml, "numFilaments_sec",          numFilaments_sec);
+        FromYAML<size_t>    (yaml, "expectedNumIterations",     expectedNumIterations);
+        FromYAML<bool>      (yaml, "saveResults",               saveResults);
+        FromYAML<float>     (yaml, "saveDeltaTime",             saveDeltaTime);
+        // clang-format on
+
+        windLoop = ParseLoopYAML(yaml["wind_looping"]);
     }
 
 } // namespace gaden

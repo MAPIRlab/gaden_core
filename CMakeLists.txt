@@ -13,6 +13,7 @@ include_directories(third_party/DDA/third_party/glm)
 add_subdirectory(third_party/yaml-cpp)
 
 add_library(gaden SHARED
+    src/CoppeliaSim.cpp
     src/Environment.cpp
     src/EnvironmentConfiguration.cpp
     src/PlaybackSimulation.cpp
@@ -30,4 +31,6 @@ target_link_libraries(gaden
     ZLIB::ZLIB
 )
 
+# Utility executables for dealing with different file formats involved in gaden simulation 
 add_subdirectory(utils/STL)
+add_subdirectory(utils/decompress)

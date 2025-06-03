@@ -13,7 +13,6 @@ namespace gaden
     {
         Environment environment;
         WindSequence windSequence;
-        std::vector<Model3D> visualizationModels; // optional data about how to visualize this environment
 
         bool WriteToDirectory(const std::filesystem::path& path);
         bool ReadDirectory(const std::filesystem::path& path);

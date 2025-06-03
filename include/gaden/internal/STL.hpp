@@ -126,4 +126,37 @@ namespace gaden
         }
         return triangles;
     }
+
+    inline void WriteBinarySTL(std::filesystem::path const& path, std::vector<Triangle> const& triangles)
+    {
+        std::ofstream outfile(path, std::ios_base::binary);
+        if (!outfile.is_open())
+        {
+            GADEN_ERROR("Could not open output file {}", path);
+            return;
+        }
+
+        const char msg[] = "STL File. From gaden, with love.";
+        std::vector<char> header(80, 0x00);
+        memcpy(header.data(), msg, sizeof(msg));
+
+        outfile.write(header.data(), 80);
+        uint32_t numTriangles = triangles.size();
+        outfile.write((char*)&numTriangles, sizeof(uint32_t));
+
+        for (const Triangle& triangle : triangles)
+        {
+            gaden::Vector3 normal = triangle.normal();
+            outfile.write((char*)&normal, 3 * sizeof(float));
+            outfile.write((char*)&triangle.p1, 3 * sizeof(float));
+            outfile.write((char*)&triangle.p2, 3 * sizeof(float));
+            outfile.write((char*)&triangle.p3, 3 * sizeof(float));
+
+            // this is arbitrary data you can append to a triangle, to be interpreted how you see fit (colors, maybe?)
+            // we don't want to store anything, but the bytes must be there anyways
+            constexpr uint16_t attributeData = 0x0000;
+            outfile.write((char*)&attributeData, sizeof(uint16_t));
+        }
+        outfile.close();
+    }
 } // namespace gaden

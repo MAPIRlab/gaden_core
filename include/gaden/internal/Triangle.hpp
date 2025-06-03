@@ -35,7 +35,7 @@ namespace gaden
             }
         }
 
-        Vector3 normal()
+        Vector3 normal() const
         {
             return vmath::cross(p1-p2, p1-p3);
         }

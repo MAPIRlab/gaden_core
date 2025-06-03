@@ -43,7 +43,7 @@ namespace gaden::paths
         return referencePoint / path;
     }
 
-    inline std::vector<std::filesystem::path> GetWindFiles(std::string const& commonPath)
+    inline std::vector<std::filesystem::path> GetExternalWindFiles(std::string const& commonPath)
     {
         std::string filename = fmt::format("{}_{}.csv", commonPath, 0);
         if (!std::filesystem::exists(filename))

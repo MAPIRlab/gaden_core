@@ -14,20 +14,32 @@ namespace gaden
     {
         if (!std::filesystem::exists(rootDirectory))
             return ReadResult::NO_FILE;
-        
+
         try
         {
+            // read the environment configuration
             envMetadata.ReadFromYAML(rootDirectory / "config.yaml");
             std::vector<std::filesystem::path> simConfigs = paths::GetAllFilesInDirectory(rootDirectory / "simulations");
 
+            // read the simulation configurations
             for (std::filesystem::path const& sim : simConfigs)
             {
                 if (auto params = ParseSimulationFolder(sim))
                 {
-                    params->simulationID = sim.filename();
-                    simulations[params->simulationID] = params.value();
-                    GADEN_INFO("Found simulation configuration: {}", params->simulationID);
+                    std::string name = sim.stem();
+                    simulations[name] = params.value();
+                    GADEN_INFO("Found simulation configuration: {}", name);
                 }
+            }
+
+            // read the playback configurations
+            std::vector<std::filesystem::path> playbackConfigs = paths::GetAllFilesInDirectory(rootDirectory / "playbacks");
+            for (std::filesystem::path const& playbackFile : playbackConfigs)
+            {
+                PlaybackMetadata metadata;
+                metadata.ReadFromYAML(playbackFile, rootDirectory);
+                playbacks[playbackFile.stem()] = metadata;
+                GADEN_INFO("Found playback configuration: {}", playbackFile.stem());
             }
         }
         catch (std::exception const& e)
@@ -95,7 +107,7 @@ namespace gaden
         processModelList(models_YAML, envModels, yamlPath.parent_path());
         processModelList(outlets_models_YAML, outletModels, yamlPath.parent_path());
 
-        unprocessedWindFilePaths = paths::GetWindFiles(paths::MakeAbsolutePath(wind_files, yamlPath.parent_path()));
+        unprocessedWindFilePaths = paths::GetExternalWindFiles(paths::MakeAbsolutePath(wind_files, yamlPath.parent_path()));
     }
 
     std::vector<std::filesystem::path> Project::EnvConfigurationMetadata::GetPaths(std::vector<Model3D> const& models)
@@ -105,6 +117,28 @@ namespace gaden
         for (const auto& m : models)
             paths.push_back(m.path);
         return paths;
+    }
+
+    inline void Project::PlaybackMetadata::ReadFromYAML(std::filesystem::path const& yamlPath, std::filesystem::path const& projectRoot)
+    {
+        YAML::Node yaml = YAML::LoadFile(yamlPath);
+
+        size_t startIteration = yaml["initial_iteration"].as<size_t>();
+        loop = ParseLoopYAML(yaml["playback_loop"]);
+        YAML::Node simulations = yaml["simulations"];
+
+        params.resize(simulations.size());
+        gasDisplayColor.resize(simulations.size());
+        for (size_t i = 0; i < simulations.size(); i++)
+        {
+            params.at(i).startIteration = startIteration;
+            params.at(i).resultsDirectory = projectRoot / "simulations" / simulations[i]["sim"].as<std::string>() / "result";
+            
+            auto color_vec = simulations[i]["gas_color"].as<std::vector<float>>();
+            gasDisplayColor.at(i).r = color_vec[0];
+            gasDisplayColor.at(i).g = color_vec[1];
+            gasDisplayColor.at(i).b = color_vec[2];
+        }
     }
 
 } // namespace gaden

@@ -9,16 +9,23 @@ namespace gaden
     PlaybackSimulation::PlaybackSimulation(Parameters params, EnvironmentConfiguration const& config, LoopConfig loop)
         : Simulation(config), parameters(params), loopConfig(loop)
     {
-        if (loopConfig.from > loopConfig.to)
+        currentIteration = parameters.startIteration;
+        if (loopConfig.loop)
         {
-            GADEN_ERROR("Incorrect loop configuration {}-{}. Setting loop to false", loopConfig.from, loopConfig.to);
-            loopConfig.loop = false;
+            if (currentIteration > loopConfig.to)
+                GADEN_WARN("Starting iteration {} is greater than loop limit {}!", currentIteration, loopConfig.to);
+
+            if (loopConfig.from > loopConfig.to)
+            {
+                GADEN_ERROR("Incorrect loop configuration {}-{}. Setting loop to false", loopConfig.from, loopConfig.to);
+                loopConfig.loop = false;
+            }
         }
     }
 
     void PlaybackSimulation::AdvanceTimestep()
     {
-        std::string filename = fmt::format("{}/iteration_{}", parameters.simulationDirectory.c_str(), currentIteration);
+        std::string filename = fmt::format("{}/iteration_{}", parameters.resultsDirectory.c_str(), currentIteration);
         if (!std::filesystem::exists(filename))
         {
             GADEN_ERROR("File '{}' does not exist!", filename.c_str());

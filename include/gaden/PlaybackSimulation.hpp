@@ -10,7 +10,7 @@ namespace gaden
         struct Parameters
         {
             size_t startIteration = 0;
-            std::filesystem::path simulationDirectory;
+            std::filesystem::path resultsDirectory;
         };
 
     public:

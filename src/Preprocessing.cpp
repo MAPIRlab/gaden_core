@@ -1,6 +1,6 @@
 #include "gaden/Preprocessing.hpp"
 #include "gaden/internal/MathUtils.hpp"
-#include "preprocessing/STL.hpp"
+#include "gaden/internal/STL.hpp"
 #include "preprocessing/TriangleBoxIntersection.hpp"
 #include <algorithm>
 #include <queue>

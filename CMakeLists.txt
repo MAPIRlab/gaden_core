@@ -3,6 +3,8 @@ project(gaden)
 set(CMAKE_CXX_STANDARD 20)
 
 find_package(OpenMP)
+find_package(fmt)
+find_package(ZLIB)
 
 include_directories(include)
 include_directories(third_party/DDA/include)
@@ -21,4 +23,11 @@ add_library(gaden SHARED
     src/WindSequence.cpp
 )
 
-target_link_libraries(gaden yaml-cpp::yaml-cpp OpenMP::OpenMP_CXX)
+target_link_libraries(gaden 
+    yaml-cpp::yaml-cpp 
+    OpenMP::OpenMP_CXX 
+    fmt 
+    ZLIB::ZLIB
+)
+
+add_subdirectory(utils/STL)

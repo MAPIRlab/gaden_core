@@ -33,7 +33,7 @@ namespace gaden
         simulationMetadata.totalMolesInFilament = filament_moles_cm3_center * (sqrt(8 * pow(M_PI, 3)) * pow(params.filament_initial_sigma, 3)); // total number of moles in a filament
 
         if (parameters.saveResults)
-            GADEN_INFO("Saving results in directory '{}'", parameters.saveDataDirectory / parameters.simulationID);
+            GADEN_INFO("Saving results in directory '{}'", parameters.saveDataDirectory / "result");
     }
 
     void RunningSimulation::AdvanceTimestep()
@@ -190,11 +190,11 @@ namespace gaden
         static size_t last_saved_step = 0;
 
         // check we can create the file
-        paths::TryCreateDirectory(parameters.saveDataDirectory / "gas_simulations");
-        paths::TryCreateDirectory(parameters.saveDataDirectory / "gas_simulations" / parameters.simulationID);
+        std::filesystem::path savePath = parameters.saveDataDirectory / "result";
+        paths::TryCreateDirectory(savePath);
 
         // Configure file name for saving the current snapshot
-        std::filesystem::path path = fmt::format("{}/gas_simulations/{}/iteration_{}", parameters.saveDataDirectory.c_str(), parameters.simulationID, last_saved_step);
+        std::filesystem::path path = fmt::format("{}/iteration_{}", savePath, last_saved_step);
 
         // write all the data as-is into a buffer, which we will then compress
         static std::vector<uint8_t> rawBuffer(maxBufferSize);
@@ -232,6 +232,8 @@ namespace gaden
     void RunningSimulation::Parameters::ReadFromYAML(std::filesystem::path const& path)
     {
         const YAML::Node yaml = YAML::LoadFile(path);
+
+        saveDataDirectory = path.parent_path();
 
         // clang-format off
         FromYAML<GasType>   (yaml, "gasType",                   gasType);

@@ -2,9 +2,10 @@
 
 #include "gaden/RunningSimulation.hpp"
 #include <filesystem>
+#include <gaden/PlaybackSimulation.hpp>
 #include <map>
-#include <string>
 #include <optional>
+#include <string>
 
 namespace gaden
 {
@@ -14,8 +15,6 @@ namespace gaden
         using SimulationParams = RunningSimulation::Parameters;
 
     public:
-        ReadResult Read();
-
         // data required to generate the internal representation of the environment configuration
         struct EnvConfigurationMetadata
         {
@@ -31,16 +30,24 @@ namespace gaden
             static std::vector<std::filesystem::path> GetPaths(std::vector<Model3D> const& models);
         };
 
+        struct PlaybackMetadata
+        {
+            std::vector<PlaybackSimulation::Parameters> params;
+            std::vector<Color> gasDisplayColor;
+            LoopConfig loop;
+            void ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot);
+        };
+
         Project(std::filesystem::path const& directory);
+        ReadResult Read();
 
     public:
         EnvConfigurationMetadata envMetadata;
         std::map<std::string, SimulationParams> simulations;
+        std::map<std::string, PlaybackMetadata> playbacks;
+        std::filesystem::path rootDirectory;
 
     private:
         std::optional<SimulationParams> ParseSimulationFolder(std::filesystem::path const& path);
-
-    private:
-        std::filesystem::path rootDirectory;
     };
 } // namespace gaden

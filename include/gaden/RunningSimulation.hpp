@@ -28,7 +28,6 @@ namespace gaden
             bool saveResults = false;
             float saveDeltaTime = 0.5;
             std::filesystem::path saveDataDirectory;
-            std::string simulationID = "sim1"; // used to name the directory in which the results are stored
 
             void ReadFromYAML(std::filesystem::path const& path);
         };

@@ -10,26 +10,11 @@
 namespace gaden
 {
 
-    class Project
+    class EnvironmentConfigMetadata
     {
         using SimulationParams = RunningSimulation::Parameters;
 
     public:
-        // data required to generate the internal representation of the environment configuration
-        struct EnvConfigurationMetadata
-        {
-            std::vector<Model3D> envModels;
-            std::vector<Model3D> outletModels;
-            std::vector<std::filesystem::path> unprocessedWindFilePaths;
-
-            float cellSize = 0.1f;
-            gaden::Vector3 emptyPoint = {0, 0, 0};
-            bool uniformWind = false;
-
-            void ReadFromYAML(std::filesystem::path const& yamlPath);
-            static std::vector<std::filesystem::path> GetPaths(std::vector<Model3D> const& models);
-        };
-
         struct PlaybackMetadata
         {
             std::vector<PlaybackSimulation::Parameters> params;
@@ -38,11 +23,21 @@ namespace gaden
             void ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot);
         };
 
-        Project(std::filesystem::path const& directory);
-        ReadResult Read();
+        EnvironmentConfigMetadata(std::filesystem::path const& directory);
+        ReadResult ReadDirectory();
+        void ReadFromYAML(std::filesystem::path const& yamlPath);
+        static std::vector<std::filesystem::path> GetPaths(std::vector<Model3D> const& models);
+        bool CreateTemplate();
 
     public:
-        EnvConfigurationMetadata envMetadata;
+        std::vector<Model3D> envModels;
+        std::vector<Model3D> outletModels;
+        std::vector<std::filesystem::path> unprocessedWindFilePaths;
+
+        float cellSize = 0.1f;
+        gaden::Vector3 emptyPoint = {0, 0, 0};
+        bool uniformWind = false;
+
         std::map<std::string, SimulationParams> simulations;
         std::map<std::string, PlaybackMetadata> playbacks;
         std::filesystem::path rootDirectory;

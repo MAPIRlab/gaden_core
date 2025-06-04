@@ -25,12 +25,12 @@ namespace gaden
 
 #else
 
-#define GADEN_INFO(...) printf("[INFO] %s", fmt::format(__VA_ARGS__).c_str())
-#define GADEN_INFO_COLOR(color, ...) printf("[INFO] %s", fmt::format(fmt::fg(color), __VA_ARGS__).c_str())
+#define GADEN_INFO(...) fprintf(stderr, "[INFO] %s\n", fmt::format(__VA_ARGS__).c_str())
+#define GADEN_INFO_COLOR(color, ...) fprintf(stderr, "[INFO] %s\n", fmt::format(fmt::fg(color), __VA_ARGS__).c_str())
 
-#define GADEN_WARN(...) printf("[WARN] %s", fmt::format(fmt::fg(fmt::terminal_color::yellow), __VA_ARGS__).c_str())
+#define GADEN_WARN(...) fprintf(stderr, "[WARN] %s\n", fmt::format(fmt::fg(fmt::terminal_color::yellow), __VA_ARGS__).c_str())
 
-#define GADEN_ERROR(...) printf("[ERROR] %s", fmt::format(fmt::fg(fmt::terminal_color::red), __VA_ARGS__).c_str())
+#define GADEN_ERROR(...) fprintf(stderr, "[ERROR] %s\n", fmt::format(fmt::fg(fmt::terminal_color::red), __VA_ARGS__).c_str())
 
 #endif
 

@@ -6,10 +6,6 @@ find_package(OpenMP)
 find_package(fmt)
 find_package(ZLIB)
 
-include_directories(include)
-include_directories(third_party/DDA/include)
-include_directories(third_party/DDA/third_party/glm)
-
 add_subdirectory(third_party/yaml-cpp)
 
 add_library(gaden SHARED
@@ -22,6 +18,12 @@ add_library(gaden SHARED
     src/RunningSimulation.cpp
     src/Simulation.cpp
     src/WindSequence.cpp
+)
+
+target_include_directories(gaden PUBLIC
+    include
+    third_party/DDA/include
+    third_party/DDA/third_party/glm
 )
 
 target_link_libraries(gaden 

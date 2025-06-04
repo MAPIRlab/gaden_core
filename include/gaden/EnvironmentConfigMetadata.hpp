@@ -26,6 +26,7 @@ namespace gaden
         EnvironmentConfigMetadata(std::filesystem::path const& directory);
         ReadResult ReadDirectory();
         void ReadFromYAML(std::filesystem::path const& yamlPath);
+        std::string GetName();
         static std::vector<std::filesystem::path> GetPaths(std::vector<Model3D> const& models);
         bool CreateTemplate();
 

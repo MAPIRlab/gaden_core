@@ -111,6 +111,11 @@ namespace gaden
         unprocessedWindFilePaths = paths::GetExternalWindFiles(paths::MakeAbsolutePath(wind_files, yamlPath.parent_path()));
     }
 
+    std::string EnvironmentConfigMetadata::GetName()
+    {
+        return rootDirectory.filename().string();
+    }
+
     std::vector<std::filesystem::path> EnvironmentConfigMetadata::EnvironmentConfigMetadata::GetPaths(std::vector<Model3D> const& models)
     {
         std::vector<std::filesystem::path> paths;
@@ -146,6 +151,7 @@ namespace gaden
     {
         try
         {
+            GADEN_INFO("Creating environment configuration  at'{}'", rootDirectory);
             // create the root-level stuff
             std::filesystem::create_directories(rootDirectory / "simulations");
             std::filesystem::create_directories(rootDirectory / "playbacks");

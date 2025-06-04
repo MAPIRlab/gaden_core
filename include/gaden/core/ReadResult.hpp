@@ -10,18 +10,18 @@ namespace gaden
         READING_FAILED
     };
 
-#define GADEN_CHECK_RESULT(expression)                                                               \
+#define GADEN_CHECK_RESULT(expression)                                                         \
     {                                                                                          \
         gaden::ReadResult readResult = expression;                                             \
-        if (readResult == gaden::ReadResult::NO_FILE)                                                 \
+        if (readResult == gaden::ReadResult::NO_FILE)                                          \
         {                                                                                      \
             GADEN_ERROR("File could not be found! At '{}':{}", __FILE__, __LINE__);            \
-            GADEN_TERMINATE;                                                                   \
+            throw std::exception();                              \
         }                                                                                      \
-        else if (readResult == gaden::ReadResult::READING_FAILED)                                     \
+        else if (readResult == gaden::ReadResult::READING_FAILED)                              \
         {                                                                                      \
             GADEN_ERROR("File could not be parsed correctly! At '{}':{}", __FILE__, __LINE__); \
-            GADEN_TERMINATE;                                                                   \
+            throw std::exception();                              \
         }                                                                                      \
     }
 } // namespace gaden

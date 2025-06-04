@@ -6,7 +6,7 @@ namespace gaden
     struct Color
     {
         float r = 1, g = 1, b = 1, a = 1;
-        
+
         static Color Parse(const std::string& str)
         {
             Color color;
@@ -27,6 +27,19 @@ namespace gaden
                 ss >> color.a;
 
             return color;
+        }
+
+        bool operator==(Color const& other) const
+        {
+            return r == other.r &&
+                   g == other.g &&
+                   b == other.b &&
+                   a == other.a;
+        }
+
+        bool operator!=(Color const& other) const
+        {
+            return !(*this == other);
         }
     };
 

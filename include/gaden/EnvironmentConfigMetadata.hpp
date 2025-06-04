@@ -25,19 +25,20 @@ namespace gaden
 
         EnvironmentConfigMetadata(std::filesystem::path const& directory);
         ReadResult ReadDirectory();
-        void ReadFromYAML(std::filesystem::path const& yamlPath);
+        void WriteConfigYAML();
         std::string GetName();
         static std::vector<std::filesystem::path> GetPaths(std::vector<Model3D> const& models);
         bool CreateTemplate();
+        std::vector<std::filesystem::path> GetWindFiles();
 
     public:
         std::vector<Model3D> envModels;
         std::vector<Model3D> outletModels;
-        std::vector<std::filesystem::path> unprocessedWindFilePaths;
 
         float cellSize = 0.1f;
         gaden::Vector3 emptyPoint = {0, 0, 0};
         bool uniformWind = false;
+        std::string unprocessedWindFiles; // the path, as appears in the configuration file (without the _i.csv suffix)
 
         std::map<std::string, SimulationParams> simulations;
         std::map<std::string, PlaybackMetadata> playbacks;
@@ -45,5 +46,8 @@ namespace gaden
 
     private:
         std::optional<SimulationParams> ParseSimulationFolder(std::filesystem::path const& path);
+        void ReadFromYAML(std::filesystem::path const& yamlPath);
+
+    private:
     };
 } // namespace gaden

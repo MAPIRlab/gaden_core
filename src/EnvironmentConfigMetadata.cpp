@@ -80,6 +80,12 @@ namespace gaden
                 continue;
             }
             std::filesystem::path modelPath = paths::MakeAbsolutePath(entry, EnvConfigurationMetadataRoot);
+            if (!std::filesystem::exists(modelPath) || modelPath.extension() != ".stl")
+            {
+                GADEN_WARN("Ignoring path '{}', which is not a valid .stl model", modelPath);
+                continue;
+            }
+
             Model3D model{.path = modelPath, .color = lastParsedColor};
             modelsList.push_back(model);
         }
@@ -95,6 +101,7 @@ namespace gaden
         
         std::string wind_files;
         FromYAML<std::string> ( yaml, "unprocessed_wind_files", wind_files);
+        unprocessedWindFiles = wind_files;
         
         FromYAML<float> ( yaml, "empty_point_x", emptyPoint.x);
         FromYAML<float> ( yaml, "empty_point_y", emptyPoint.y);
@@ -107,8 +114,31 @@ namespace gaden
 
         processModelList(models_YAML, envModels, yamlPath.parent_path());
         processModelList(outlets_models_YAML, outletModels, yamlPath.parent_path());
+    }
 
-        unprocessedWindFilePaths = paths::GetExternalWindFiles(paths::MakeAbsolutePath(wind_files, yamlPath.parent_path()));
+    void EnvironmentConfigMetadata::WriteConfigYAML()
+    {
+        YAML::Emitter emitter;
+        emitter << YAML::BeginMap;
+        emitter << YAML::Key << "models" << YAML::Value;
+        EncodeModelsList(emitter, envModels);
+
+        emitter << YAML::Key << "outlets_models" << YAML::Value;
+        EncodeModelsList(emitter, outletModels);
+
+        emitter << YAML::Key << "unprocessed_wind_files" << YAML::Value << unprocessedWindFiles;
+
+        emitter << YAML::Key << "empty_point_x" << YAML::Value << emptyPoint.x;
+        emitter << YAML::Key << "empty_point_y" << YAML::Value << emptyPoint.y;
+        emitter << YAML::Key << "empty_point_z" << YAML::Value << emptyPoint.z;
+
+        emitter << YAML::Key << "cell_size" << YAML::Value << cellSize;
+        emitter << YAML::Key << "uniformWind" << YAML::Value << uniformWind;
+        emitter << YAML::EndMap;
+
+        std::ofstream file(rootDirectory / "config.yaml");
+        file << emitter.c_str();
+        file.close();
     }
 
     std::string EnvironmentConfigMetadata::GetName()
@@ -235,5 +265,7 @@ simulations:
         }
         return true;
     }
+
+    std::vector<std::filesystem::path> EnvironmentConfigMetadata::GetWindFiles(){return paths::GetExternalWindFiles(paths::MakeAbsolutePath(unprocessedWindFiles, rootDirectory));}
 
 } // namespace gaden

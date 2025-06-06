@@ -1,4 +1,3 @@
-#include "gaden/core/Assertions.hpp"
 #include "gaden/core/GadenVersion.hpp"
 #include "gaden/core/Logging.hpp"
 #include "gaden/internal/MathUtils.hpp"
@@ -14,8 +13,7 @@ namespace gaden
         for (size_t i = 0; i < files.size(); i++)
         {
             const auto& file = files[i];
-            if (parseFile(file, windIterations.at(i)) != ReadResult::OK)
-                GADEN_TERMINATE;
+            GADEN_CHECK_RESULT(parseFile(file, windIterations.at(i)));
         }
         Initialize(windIterations, numCells, loopConf);
     }
@@ -110,7 +108,7 @@ namespace gaden
             }
 
             for (size_t i = 0; i < timestep.size(); i++)
-                    timestep[i] = v;
+                timestep[i] = v;
 
             windMaps.push_back(timestep);
         }

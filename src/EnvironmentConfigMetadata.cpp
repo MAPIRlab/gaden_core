@@ -136,9 +136,11 @@ namespace gaden
         emitter << YAML::Key << "uniformWind" << YAML::Value << uniformWind;
         emitter << YAML::EndMap;
 
-        std::ofstream file(rootDirectory / "config.yaml");
+        std::filesystem::path path(rootDirectory / "config.yaml");
+        std::ofstream file(path);
         file << emitter.c_str();
         file.close();
+        GADEN_INFO("Wrote configuration to '{}'", path);
     }
 
     std::string EnvironmentConfigMetadata::GetName()
@@ -266,6 +268,9 @@ simulations:
         return true;
     }
 
-    std::vector<std::filesystem::path> EnvironmentConfigMetadata::GetWindFiles(){return paths::GetExternalWindFiles(paths::MakeAbsolutePath(unprocessedWindFiles, rootDirectory));}
+    std::vector<std::filesystem::path> EnvironmentConfigMetadata::GetWindFiles() const
+    {
+        return paths::GetExternalWindFiles(paths::MakeAbsolutePath(unprocessedWindFiles, rootDirectory));
+    }
 
 } // namespace gaden

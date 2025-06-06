@@ -91,7 +91,7 @@ namespace gaden
             {
                 if (model.color != color)
                 {
-                    emitter << fmt::format("!color [{:.2f}, {:.2f}, {:.2f}]", model.color.r, model.color.g, model.color.b);
+                    emitter << fmt::format("!color [{:.2f}, {:.2f}, {:.2f}, {:.2f}]", model.color.r, model.color.g, model.color.b, model.color.a);
                     color = model.color;
                 }
                 emitter << std::filesystem::canonical(model.path).c_str();

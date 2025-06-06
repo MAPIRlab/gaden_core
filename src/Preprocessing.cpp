@@ -134,6 +134,34 @@ namespace gaden
         return sequence;
     }
 
+    std::optional<EnvironmentConfiguration> Preprocessing::Preprocess(EnvironmentConfigMetadata const& metadata)
+    {
+        try
+        {
+            EnvironmentConfiguration config;
+            std::vector<std::filesystem::path> envModels;
+            for (auto& model : metadata.envModels)
+                envModels.push_back(model.path);
+
+            std::vector<std::filesystem::path> outletModels;
+            for (auto& model : metadata.outletModels)
+                outletModels.push_back(model.path);
+
+            config.environment = ParseSTLModels(envModels, outletModels, metadata.cellSize, metadata.emptyPoint);
+
+            if (metadata.uniformWind)
+                config.windSequence = WindSequence::CreateUniformWind(metadata.GetWindFiles()[0], config.environment.numCells());
+            else
+                config.windSequence = ParseOpenFoamVectorCloud(metadata.GetWindFiles(), config.environment, {});
+            return config;
+        }
+        catch (std::exception const& e)
+        {
+            GADEN_ERROR("Exception while trying to run preprocessing: '{}'", e.what());
+            return std::nullopt;
+        }
+    }
+
     Preprocessing::BoundingBox Preprocessing::findDimensions(const std::vector<Triangle>& triangles)
     {
         BoundingBox boundingBox;

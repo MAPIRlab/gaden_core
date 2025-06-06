@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gaden/Environment.hpp"
+#include "gaden/EnvironmentConfigMetadata.hpp"
 #include "gaden/internal/Triangle.hpp"
 #include "gaden/internal/WindSequence.hpp"
 
@@ -17,6 +18,8 @@ namespace gaden
         static WindSequence ParseOpenFoamVectorCloud(const std::vector<std::filesystem::path>& files,
                                                      const Environment& env,
                                                      LoopConfig loopConfig);
+
+        static std::optional<EnvironmentConfiguration> Preprocess(EnvironmentConfigMetadata const& metadata);
 
     private:
         struct BoundingBox

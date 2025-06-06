@@ -4,6 +4,7 @@
 #include "gaden/core/Logging.hpp"
 #include "gaden/datatypes/Model3D.hpp"
 #include "gaden/internal/WindSequence.hpp"
+#include <optional>
 
 namespace gaden
 {
@@ -15,7 +16,7 @@ namespace gaden
         WindSequence windSequence;
 
         bool WriteToDirectory(const std::filesystem::path& path);
-        bool ReadDirectory(const std::filesystem::path& path);
+        static std::optional<EnvironmentConfiguration> ReadDirectory(const std::filesystem::path& path);
     };
 
 } // namespace gaden

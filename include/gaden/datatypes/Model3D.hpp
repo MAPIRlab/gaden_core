@@ -47,5 +47,10 @@ namespace gaden
     {
         std::filesystem::path path;
         Color color;
+
+        operator std::filesystem::path() const
+        {
+            return path;
+        }
     };
 } // namespace gaden

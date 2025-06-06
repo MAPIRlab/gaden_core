@@ -29,7 +29,7 @@ namespace gaden
         std::string GetName();
         static std::vector<std::filesystem::path> GetPaths(std::vector<Model3D> const& models);
         bool CreateTemplate();
-        std::vector<std::filesystem::path> GetWindFiles();
+        std::vector<std::filesystem::path> GetWindFiles() const;
 
     public:
         std::vector<Model3D> envModels;

@@ -48,7 +48,7 @@ namespace gaden::paths
         std::string filename = fmt::format("{}_{}.csv", commonPath, 0);
         if (!std::filesystem::exists(filename))
         {
-            GADEN_WARN("File '{}' does not exist", filename.c_str());
+            GADEN_WARN("Wind file '{}' does not exist", filename.c_str());
             return {};
         }
 

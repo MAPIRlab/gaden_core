@@ -231,28 +231,76 @@ namespace gaden
 
     void RunningSimulation::Parameters::ReadFromYAML(std::filesystem::path const& path)
     {
-        const YAML::Node yaml = YAML::LoadFile(path);
+        try
+        {
+            const YAML::Node yaml = YAML::LoadFile(path);
 
-        saveDataDirectory = path.parent_path();
+            saveDataDirectory = path.parent_path();
 
-        // clang-format off
-        FromYAML<GasType>   (yaml, "gasType",                   gasType);
-        FromYAML<Vector3>   (yaml, "sourcePosition",            sourcePosition);
-        FromYAML<float>     (yaml, "deltaTime",                 deltaTime);
-        FromYAML<float>     (yaml, "windIterationDeltaTime",    windIterationDeltaTime);
-        FromYAML<float>     (yaml, "temperature",               temperature);
-        FromYAML<float>     (yaml, "pressure",                  pressure);
-        FromYAML<float>     (yaml, "filament_ppm_center",       filament_ppm_center);
-        FromYAML<float>     (yaml, "filament_initial_sigma",    filament_initial_sigma);
-        FromYAML<float>     (yaml, "filament_growth_gamma",     filament_growth_gamma);
-        FromYAML<float>     (yaml, "filament_noise_std",        filament_noise_std);
-        FromYAML<float>     (yaml, "numFilaments_sec",          numFilaments_sec);
-        FromYAML<size_t>    (yaml, "expectedNumIterations",     expectedNumIterations);
-        FromYAML<bool>      (yaml, "saveResults",               saveResults);
-        FromYAML<float>     (yaml, "saveDeltaTime",             saveDeltaTime);
-        // clang-format on
+            // clang-format off
+            FromYAML<GasType>   (yaml, "gasType",                   gasType);
+            FromYAML<Vector3>   (yaml, "sourcePosition",            sourcePosition);
+            FromYAML<float>     (yaml, "deltaTime",                 deltaTime);
+            FromYAML<float>     (yaml, "windIterationDeltaTime",    windIterationDeltaTime);
+            FromYAML<float>     (yaml, "temperature",               temperature);
+            FromYAML<float>     (yaml, "pressure",                  pressure);
+            FromYAML<float>     (yaml, "filament_ppm_center",       filament_ppm_center);
+            FromYAML<float>     (yaml, "filament_initial_sigma",    filament_initial_sigma);
+            FromYAML<float>     (yaml, "filament_growth_gamma",     filament_growth_gamma);
+            FromYAML<float>     (yaml, "filament_noise_std",        filament_noise_std);
+            FromYAML<float>     (yaml, "numFilaments_sec",          numFilaments_sec);
+            FromYAML<size_t>    (yaml, "expectedNumIterations",     expectedNumIterations);
+            FromYAML<bool>      (yaml, "saveResults",               saveResults);
+            FromYAML<float>     (yaml, "saveDeltaTime",             saveDeltaTime);
+            // clang-format on
 
-        windLoop = ParseLoopYAML(yaml["wind_looping"]);
+            if (YAML::Node wind_yaml = yaml["wind_looping"])
+                windLoop = ParseLoopYAML(wind_yaml);
+        }
+        catch (std::exception const& e)
+        {
+            GADEN_ERROR("Exception while reading simulation params from file '{}': {}", path, e.what());
+        }
+    }
+
+    bool RunningSimulation::Parameters::WriteToYAML(std::filesystem::path const& path)
+    {
+        try
+        {
+            YAML::Emitter emitter;
+            emitter << YAML::BeginMap;
+            emitter << YAML::Flow << YAML::Key << "gasType" << YAML::Value << gasType;
+            emitter << YAML::Key << "sourcePosition" << YAML::Value << sourcePosition;
+            emitter << YAML::Key << "deltaTime" << YAML::Value << deltaTime;
+            emitter << YAML::Key << "windIterationDeltaTime" << YAML::Value << windIterationDeltaTime;
+            emitter << YAML::Key << "temperature" << YAML::Value << temperature;
+            emitter << YAML::Key << "pressure" << YAML::Value << pressure;
+            emitter << YAML::Key << "filament_ppm_center" << YAML::Value << filament_ppm_center;
+            emitter << YAML::Key << "filament_initial_sigma" << YAML::Value << filament_initial_sigma;
+            emitter << YAML::Key << "filament_growth_gamma" << YAML::Value << filament_growth_gamma;
+            emitter << YAML::Key << "filament_noise_std" << YAML::Value << filament_noise_std;
+            emitter << YAML::Key << "numFilaments_sec" << YAML::Value << numFilaments_sec;
+            emitter << YAML::Key << "expectedNumIterations" << YAML::Value << expectedNumIterations;
+            emitter << YAML::Key << "saveResults" << YAML::Value << saveResults;
+            emitter << YAML::Key << "saveDeltaTime" << YAML::Value << saveDeltaTime;
+
+            emitter << YAML::Key << "wind_looping";
+            emitter << YAML::BeginMap;
+            WriteLoopYAML(emitter, windLoop);
+            emitter << YAML::EndMap;
+
+            std::ofstream file(path);
+            file << emitter.c_str();
+            file.close();
+            GADEN_INFO("Wrote configuration to '{}'", path);
+        }
+        catch (std::exception const& e)
+        {
+            GADEN_ERROR("Failed to write simulation parameters to '{}'", path);
+            return false;
+        }
+
+        return true;
     }
 
 } // namespace gaden

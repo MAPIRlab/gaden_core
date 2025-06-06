@@ -30,6 +30,7 @@ namespace gaden
             std::filesystem::path saveDataDirectory;
 
             void ReadFromYAML(std::filesystem::path const& path);
+            bool WriteToYAML(std::filesystem::path const& path);
         };
 
     public:

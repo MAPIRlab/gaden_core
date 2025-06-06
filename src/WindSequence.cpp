@@ -24,6 +24,12 @@ namespace gaden
         loopConfig = loopConf;
         windMaps = windIterations;
 
+        if (windMaps.size() == 0)
+        {
+            windMaps.push_back(std::vector<Vector3>(numCells, Vector3{0, 0, 0}));
+            GADEN_WARN("No wind data provided. Adding an all-zero windmap");
+        }
+
         if (loopConfig.loop)
         {
             bool incorrectRange = loopConfig.from > loopConfig.to || !InRange(loopConfig.from, 0, windMaps.size()) || !InRange(loopConfig.to, 0, windMaps.size());
@@ -37,12 +43,12 @@ namespace gaden
 
     std::vector<Vector3>& WindSequence::GetCurrent()
     {
-        return windMaps[indexCurrent];
+        return windMaps.at(indexCurrent);
     }
 
     const std::vector<Vector3>& WindSequence::GetCurrent() const
     {
-        return windMaps[indexCurrent];
+        return windMaps.at(indexCurrent);
     }
 
     size_t WindSequence::GetCurrentIndex()
@@ -55,7 +61,7 @@ namespace gaden
         indexCurrent++;
         if (loopConfig.loop && indexCurrent > loopConfig.to)
             indexCurrent = loopConfig.from;
-        else if (indexCurrent > windMaps.size())
+        else if (indexCurrent >= windMaps.size())
             indexCurrent = windMaps.size() - 1;
     }
 

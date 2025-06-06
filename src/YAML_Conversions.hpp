@@ -36,8 +36,7 @@ namespace YAML
     {
         static Node encode(const gaden::GasType& rhs)
         {
-            Node node;
-            node.push_back(static_cast<size_t>(rhs));
+            Node node(static_cast<int>(rhs));
             return node;
         }
 
@@ -45,7 +44,7 @@ namespace YAML
         {
             try
             {
-                rhs = static_cast<gaden::GasType>(node.as<size_t>());
+                rhs = static_cast<gaden::GasType>(node.as<int>());
                 return true;
             }
             catch (std::exception const& e)
@@ -55,6 +54,13 @@ namespace YAML
             }
         }
     };
+
+    template <typename T_>
+    YAML::Emitter& operator<<(YAML::Emitter& out, const T_& rhs)
+    {
+        out << convert<T_>::encode(rhs);
+        return out;
+    }
 } // namespace YAML
 
 namespace gaden
@@ -73,6 +79,13 @@ namespace gaden
         FromYAML<size_t>(node, "from", config.from);
         FromYAML<size_t>(node, "to", config.to);
         return config;
+    }
+
+    inline void WriteLoopYAML(YAML::Emitter& emitter, LoopConfig const& config)
+    {
+        emitter << YAML::Key << "loop" << YAML::Value << config.loop;
+        emitter << YAML::Key << "from" << YAML::Value << config.from;
+        emitter << YAML::Key << "to" << YAML::Value << config.to;
     }
 
     inline void EncodeModelsList(YAML::Emitter& emitter, const std::vector<gaden::Model3D>& models)

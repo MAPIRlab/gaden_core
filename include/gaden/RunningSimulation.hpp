@@ -1,6 +1,7 @@
 #pragma once
 #include "Simulation.hpp"
 #include "gaden/EnvironmentConfiguration.hpp"
+#include "gaden/internal/MathUtils.hpp"
 
 namespace gaden
 {
@@ -61,5 +62,14 @@ namespace gaden
 
         float currentTime = 0.0;
         size_t currentIteration = 0;
+
+        float lastSaveTime = -FLT_MAX;
+        float lastWindUpdateTime = 0.0;
+
+        float releaseAccumulator = 0.0; // to handle non-integer values of numFilaments_iteration over multiple iterations
+
+        size_t last_saved_step = 0;
+        std::vector<uint8_t> rawBuffer;
+        std::vector<uint8_t> compressedBuffer;
     };
 } // namespace gaden

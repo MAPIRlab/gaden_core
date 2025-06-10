@@ -21,6 +21,9 @@ namespace gaden
                 loopConfig.loop = false;
             }
         }
+
+        compressedBuffer.resize(maxBufferSize);
+        rawBuffer.resize(maxBufferSize);
     }
 
     void PlaybackSimulation::AdvanceTimestep()
@@ -37,12 +40,10 @@ namespace gaden
         std::ifstream infile(filename, std::ios_base::binary | std::ios_base::ate);
         size_t streamSize = infile.tellg();
         infile.seekg(0, std::ios_base::beg);
-        static std::vector<uint8_t> compressedBuffer(maxBufferSize);
         infile.read((char*)compressedBuffer.data(), streamSize);
         infile.close();
 
         // decompress the contents
-        static std::vector<uint8_t> rawBuffer(maxBufferSize);
         zlib::uLongf bufferSize = rawBuffer.size();
         zlib::uncompress(rawBuffer.data(), &bufferSize, compressedBuffer.data(), compressedBuffer.size());
 

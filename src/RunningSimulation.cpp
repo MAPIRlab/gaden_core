@@ -10,6 +10,7 @@
 
 namespace gaden
 {
+    static thread_local PrecalculatedGaussian<1000> gaussian; // random values following a gaussian distribution, precomputed for speed
 
     RunningSimulation::RunningSimulation(Parameters params, EnvironmentConfiguration const& envConfig)
         : parameters(params), Simulation(envConfig)
@@ -32,6 +33,9 @@ namespace gaden
         float filament_moles_cm3_center = params.filament_ppm_center / 1e6 * simulationMetadata.numMolesAllGasesIncm3;                          //[moles of target gas / cm³]
         simulationMetadata.totalMolesInFilament = filament_moles_cm3_center * (sqrt(8 * pow(M_PI, 3)) * pow(params.filament_initial_sigma, 3)); // total number of moles in a filament
 
+        rawBuffer.resize(maxBufferSize);
+        compressedBuffer.resize(maxBufferSize);
+
         if (parameters.saveResults)
             GADEN_INFO("Saving results in directory '{}'", parameters.saveDataDirectory / "result");
     }
@@ -41,14 +45,12 @@ namespace gaden
         AddFilaments();
         MoveFilaments();
 
-        static float lastSaveTime = -FLT_MAX;
         if (parameters.saveResults && currentTime > lastSaveTime + parameters.saveDeltaTime)
         {
             SaveResults();
             lastSaveTime = currentTime;
         }
 
-        static float lastWindUpdateTime = 0.0;
         if (currentTime > lastWindUpdateTime + parameters.windIterationDeltaTime)
             config.windSequence.AdvanceTimeStep();
 
@@ -64,18 +66,17 @@ namespace gaden
     void RunningSimulation::AddFilaments()
     {
         float numFilaments_iteration = parameters.numFilaments_sec * parameters.deltaTime;
-        static float accumulator = 0.0; // to handle non-integer values of numFilaments_iteration over multiple iterations
 
-        accumulator += numFilaments_iteration;
+        releaseAccumulator += numFilaments_iteration;
 
-        for (size_t i = 0; i < accumulator; i++)
+        for (size_t i = 0; i < releaseAccumulator; i++)
         {
             Vector3 randomOffset = config.environment.description.cellSize * Vector3{uniformRandom(-1, 1), uniformRandom(-1, 1), uniformRandom(-1, 1)};
             Vector3 position = parameters.sourcePosition + randomOffset;
             activeFilaments->emplace_back(position, parameters.filament_initial_sigma);
         }
 
-        accumulator = accumulator - std::floor(accumulator);
+        releaseAccumulator = releaseAccumulator - std::floor(releaseAccumulator);
     }
 
     void RunningSimulation::MoveFilaments()
@@ -130,9 +131,9 @@ namespace gaden
             // 3. Add some variability (stochastic process)
             //------------------------------------
 
-            newPosition.x += GaussianRandom(0, parameters.filament_noise_std);
-            newPosition.y += GaussianRandom(0, parameters.filament_noise_std);
-            newPosition.z += GaussianRandom(0, parameters.filament_noise_std);
+            newPosition.x += gaussian.nextValue(0, parameters.filament_noise_std);
+            newPosition.y += gaussian.nextValue(0, parameters.filament_noise_std);
+            newPosition.z += gaussian.nextValue(0, parameters.filament_noise_std);
 
             // 4. Check filament location
             //------------------------------------
@@ -187,8 +188,6 @@ namespace gaden
 
     void RunningSimulation::SaveResults()
     {
-        static size_t last_saved_step = 0;
-
         // check we can create the file
         std::filesystem::path savePath = parameters.saveDataDirectory / "result";
         paths::TryCreateDirectory(savePath);
@@ -197,7 +196,6 @@ namespace gaden
         std::filesystem::path path = fmt::format("{}/iteration_{}", savePath, last_saved_step);
 
         // write all the data as-is into a buffer, which we will then compress
-        static std::vector<uint8_t> rawBuffer(maxBufferSize);
         BufferWriter writer((char*)rawBuffer.data(), rawBuffer.size());
 
         writer.Write(&gaden::version_major);
@@ -218,7 +216,6 @@ namespace gaden
         }
 
         // compression with zlib
-        static std::vector<uint8_t> compressedBuffer(maxBufferSize);
         zlib::uLongf destLength = compressedBuffer.size();
         zlib::compress2(compressedBuffer.data(), &destLength, rawBuffer.data(), writer.currentOffset(), Z_DEFAULT_COMPRESSION);
 

@@ -30,5 +30,9 @@ namespace gaden
         std::vector<Filament> activeFilaments;
         size_t currentIteration = 0;
         bool firstReading = true;
+
+        std::vector<uint8_t> compressedBuffer;
+        std::vector<uint8_t> rawBuffer;
+
     };
 } // namespace gaden

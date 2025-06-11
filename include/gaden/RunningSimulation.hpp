@@ -1,7 +1,6 @@
 #pragma once
 #include "Simulation.hpp"
 #include "gaden/EnvironmentConfiguration.hpp"
-#include "gaden/internal/MathUtils.hpp"
 
 namespace gaden
 {
@@ -39,7 +38,7 @@ namespace gaden
         void AdvanceTimestep() override;
         const std::vector<Filament>& GetFilaments() const override;
         float GetCurrentTime() { return currentTime; }
-
+        const Parameters& GetParameters(){return parameters;}
     public:
         std::vector<Vector3> localAirflowDisturbances; // small-scale changes to airflow that happen at runtime.
                                                        // To be modified from the outside according to whatever model the user code wants to employ.

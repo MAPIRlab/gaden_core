@@ -27,15 +27,16 @@ namespace gaden::Airflow
 #pragma omp parallel for
             for (size_t i = 0; i < airflowField.size(); i++)
             {
-                glm::vec3 coordsPoint = env.coordsOfCellCenter(env.indicesFrom1D(i));
-                glm::vec3 relativePosition = coordsPoint - dronePosition;
+                Vector3 coordsPoint = env.coordsOfCellCenter(env.indicesFrom1D(i));
+                Vector3 relativePosition = coordsPoint - dronePosition;
                 float s = -relativePosition.z;
                 float r = vmath::length(Vector2(relativePosition.x, relativePosition.y));
-                airflowField.at(i) += Velocity(r, s, motorDistance, droneMass, rotorRadius, pressure, temperature);
+
+                airflowField.at(i) = Speed(r, s, motorDistance, droneMass, rotorRadius, pressure, temperature) * vmath::normalized(relativePosition);
             }
         }
 
-        static float Velocity(float r, float s,
+        static float Speed(float r, float s,
                               float motorDistance,
                               float droneMass,
                               float rotorRadius,

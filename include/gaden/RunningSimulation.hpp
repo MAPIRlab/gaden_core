@@ -40,6 +40,11 @@ namespace gaden
         const std::vector<Filament>& GetFilaments() const override;
         float GetCurrentTime() { return currentTime; }
 
+    public:
+        std::vector<Vector3> localAirflowDisturbances; // small-scale changes to airflow that happen at runtime.
+                                                       // To be modified from the outside according to whatever model the user code wants to employ.
+                                                       // See AirflowDisturbance.hpp
+
     private:
         void AddFilaments();
         void MoveFilaments();

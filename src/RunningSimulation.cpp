@@ -27,7 +27,6 @@ namespace gaden
 
         // calculate the filament->concentration constants
         //-------------------------------------------------
-        constexpr float R = 82.057338; // R is the ideal, or universal, gas constant, equal to the product of the Boltzmann constant and the Avogadro constant [cm³·atm/mol·K] Gas Constant
         simulationMetadata.numMolesAllGasesIncm3 = params.pressure / (R * params.temperature);
 
         float filament_moles_cm3_center = params.filament_ppm_center / 1e6 * simulationMetadata.numMolesAllGasesIncm3;                          //[moles of target gas / cm³]
@@ -35,6 +34,7 @@ namespace gaden
 
         rawBuffer.resize(maxBufferSize);
         compressedBuffer.resize(maxBufferSize);
+        localAirflowDisturbances.resize(config.environment.numCells(), Vector3(0, 0, 0));
 
         if (parameters.saveResults)
             GADEN_INFO("Saving results in directory '{}'", parameters.saveDataDirectory / "result");
@@ -112,7 +112,8 @@ namespace gaden
             // 1. Simulate Advection (Va)
             //    Large scale wind-eddies -> Movement of a filament as a whole by wind
             //------------------------------------------------------------------------
-            const gaden::Vector3& windVec = config.windSequence.GetCurrent().at(config.environment.indexFrom3D(cellIdx));
+            size_t cellIndex = config.environment.indexFrom3D(cellIdx);
+            gaden::Vector3 windVec = config.windSequence.GetCurrent().at(cellIndex) + localAirflowDisturbances.at(cellIndex);
             Vector3 newPosition = filament.position + windVec * parameters.deltaTime;
 
             // 2. Simulate Gravity & Bouyant Force

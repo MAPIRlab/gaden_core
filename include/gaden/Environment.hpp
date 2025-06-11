@@ -32,13 +32,14 @@ namespace gaden
     public:
         size_t numCells() const;
         size_t indexFrom3D(Vector3i indices) const;
+        Vector3i indicesFrom1D(size_t index) const;
 
         bool IsInBounds(const Vector3& point) const;
         bool IsInBounds(const Vector3i& indices) const;
 
         CellState at(const Vector3i& indices) const;
         CellState at(const Vector3& point) const;
-        
+
         // the reference versions cannot return an OOB value when the indices are wrong! It is the caller's responsibility to check the indices are in bounds first
         CellState& atRef(const Vector3i& indices) const;
         CellState& atRef(const Vector3& point) const;
@@ -60,7 +61,6 @@ namespace gaden
         Description description;
 
         std::vector<CellState> cells;
-
 
     private:
     };

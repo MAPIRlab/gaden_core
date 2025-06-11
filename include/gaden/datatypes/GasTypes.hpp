@@ -4,6 +4,8 @@
 #include <string>
 namespace gaden
 {
+    constexpr float R = 82.057338; // R is the ideal, or universal, gas constant, equal to the product of the Boltzmann constant and the Avogadro constant [cm³·atm/mol·K] Gas Constant
+    
     // clang-format off
 
     // we need to keep the backing type as int to avoid breaking the binary serialization
@@ -83,7 +85,7 @@ namespace gaden
         case GasType::smoke:
             return "smoke";
         }
-        
+
         GADEN_ERROR("Invalid gas type: {}", (int)type);
         GADEN_TERMINATE;
     }

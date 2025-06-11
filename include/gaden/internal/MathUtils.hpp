@@ -5,9 +5,19 @@
 
 namespace gaden
 {
+    constexpr float Deg2Rad = M_PI / 180.f;
+    constexpr float Rad2Deg = 180.f / M_PI;
+
     inline size_t indexFrom3D(const Vector3i& index, const Vector3i& numCellsEnv)
     {
         return index.x + index.y * numCellsEnv.x + index.z * numCellsEnv.x * numCellsEnv.y;
+    }
+
+    inline Vector3i indicesFrom1D(size_t index, const Vector3i& numCellsEnv)
+    {
+        size_t z = index / (numCellsEnv.x * numCellsEnv.y);
+        size_t remainder = index % (numCellsEnv.x * numCellsEnv.y);
+        return Vector3i(remainder % numCellsEnv.x, remainder / numCellsEnv.x, z);
     }
 
     inline bool InRange(int val, int min, int max)

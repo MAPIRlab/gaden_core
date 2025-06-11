@@ -17,6 +17,11 @@ namespace gaden
         return ::gaden::indexFrom3D(indices, description.dimensions);
     }
 
+    Vector3i Environment::indicesFrom1D(size_t index) const
+    {
+        return ::gaden::indicesFrom1D(index, description.dimensions);
+    }
+
     bool Environment::IsInBounds(const Vector3& point) const
     {
         return IsInBounds(coordsToIndices(point));

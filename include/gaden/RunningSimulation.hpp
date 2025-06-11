@@ -19,7 +19,7 @@ namespace gaden
             float filament_initial_sigma = 1.5; //[cm] Sigma of the filament at t=0-> 3DGaussian shape
             float filament_growth_gamma = 10.0; //[cm²/s] Growth ratio of the filament_std
             float filament_noise_std = 0.1;     // STD to add some "variablity" to the filament location
-            float numFilaments_sec = 100;       // How many filaments to release per second
+            float numFilaments_sec = 10;        // How many filaments to release per second
             size_t expectedNumIterations = 600; // To give initial size to filament vector. If you run the simulator longer than this, there will be a reallocation -- so, bad for performance :_(
 
             LoopConfig windLoop;

@@ -61,4 +61,26 @@ namespace gaden::paths
         }
         return paths;
     }
+
+    inline bool IsInContainedDirectory(std::filesystem::path const& path, std::filesystem::path const& directory)
+    {
+        std::filesystem::path p = path;
+        while (p.has_parent_path() && p != p.root_path())
+        {
+            p = p.parent_path();
+            if (p == directory)
+                return true;
+        }
+        return false;
+    }
+
+    inline std::filesystem::path MakeRelativeIfInProject(std::filesystem::path const& path,
+                                                         std::filesystem::path const& projectRoot,
+                                                         std::filesystem::path const& relativeTo)
+    {
+        if (IsInContainedDirectory(path, projectRoot))
+            return std::filesystem::relative(path, relativeTo);
+
+        return path;
+    }
 } // namespace gaden::paths

@@ -101,7 +101,7 @@ namespace gaden
         
         std::string wind_files;
         FromYAML<std::string> ( yaml, "unprocessed_wind_files", wind_files);
-        unprocessedWindFiles = wind_files;
+        unprocessedWindFiles = paths::MakeAbsolutePath(wind_files, yamlPath.parent_path());
         
         FromYAML<float> ( yaml, "empty_point_x", emptyPoint.x);
         FromYAML<float> ( yaml, "empty_point_y", emptyPoint.y);
@@ -116,18 +116,21 @@ namespace gaden
         processModelList(outlets_models_YAML, outletModels, yamlPath.parent_path());
     }
 
-    void EnvironmentConfigMetadata::WriteConfigYAML()
+    void EnvironmentConfigMetadata::WriteConfigYAML(std::filesystem::path const& projectRoot)
     {
         YAML::Emitter emitter;
         emitter << YAML::BeginMap;
         emitter << YAML::Key << "models" << YAML::Value;
-        EncodeModelsList(emitter, envModels);
+        EncodeModelsList(emitter, envModels, projectRoot, GetConfigFilePath());
 
         emitter << YAML::Key << "outlets_models" << YAML::Value;
-        EncodeModelsList(emitter, outletModels);
+        EncodeModelsList(emitter, outletModels, projectRoot, GetConfigFilePath());
 
-        emitter << YAML::Key << "unprocessed_wind_files" << YAML::Value << unprocessedWindFiles;
-
+        // wind files
+        emitter << YAML::Key << "unprocessed_wind_files" << YAML::Value << paths::MakeRelativeIfInProject(unprocessedWindFiles, //
+                                                                                                          projectRoot,          //
+                                                                                                          GetConfigFilePath().parent_path())
+                                                                               .c_str();
         emitter << YAML::Key << "empty_point_x" << YAML::Value << emptyPoint.x;
         emitter << YAML::Key << "empty_point_y" << YAML::Value << emptyPoint.y;
         emitter << YAML::Key << "empty_point_z" << YAML::Value << emptyPoint.z;
@@ -136,7 +139,7 @@ namespace gaden
         emitter << YAML::Key << "uniformWind" << YAML::Value << uniformWind;
         emitter << YAML::EndMap;
 
-        std::filesystem::path path(rootDirectory / "config.yaml");
+        std::filesystem::path path(GetConfigFilePath());
         std::ofstream file(path);
         file << emitter.c_str();
         file.close();

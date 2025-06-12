@@ -3,6 +3,7 @@
 #include "gaden/datatypes/GasTypes.hpp"
 #include "gaden/datatypes/LoopConfig.hpp"
 #include "gaden/datatypes/Model3D.hpp"
+#include "gaden/internal/PathUtils.hpp"
 #include <yaml-cpp/yaml.h>
 
 namespace YAML
@@ -88,7 +89,10 @@ namespace gaden
         emitter << YAML::Key << "to" << YAML::Value << config.to;
     }
 
-    inline void EncodeModelsList(YAML::Emitter& emitter, const std::vector<gaden::Model3D>& models)
+    inline void EncodeModelsList(YAML::Emitter& emitter,
+                                 std::vector<gaden::Model3D> const& models,
+                                 std::filesystem::path const& projectRoot,
+                                 std::filesystem::path const& filePath)
     {
         emitter << YAML::BeginSeq;
         gaden::Color color;
@@ -107,7 +111,9 @@ namespace gaden
                     emitter << fmt::format("!color [{:.2f}, {:.2f}, {:.2f}, {:.2f}]", model.color.r, model.color.g, model.color.b, model.color.a);
                     color = model.color;
                 }
-                emitter << std::filesystem::canonical(model.path).c_str();
+
+                std::filesystem::path path = gaden::paths::MakeRelativeIfInProject(model.path, projectRoot, filePath.parent_path());
+                emitter << path.c_str();
             }
             catch (std::exception const& e)
             {
@@ -117,7 +123,7 @@ namespace gaden
         emitter << YAML::EndSeq;
     }
 
-    static bool DecodeModelsList(const YAML::Node& node, std::vector<gaden::Model3D>& models)
+    static bool DecodeModelsList(const YAML::Node& node, std::vector<gaden::Model3D>& models, std::filesystem::path const& filePath)
     {
         try
         {
@@ -128,7 +134,10 @@ namespace gaden
                 if (line.starts_with('!'))
                     color = Color::Parse(line);
                 else
-                    models.push_back({.path = line, .color = color});
+                {
+                    std::filesystem::path path = gaden::paths::MakeAbsolutePath(path, filePath);
+                    models.push_back({.path = path, .color = color});
+                }
             }
         }
         catch (std::exception const& e)

@@ -25,12 +25,13 @@ namespace gaden
 
         EnvironmentConfigMetadata(std::filesystem::path const& directory);
         ReadResult ReadDirectory();
-        void WriteConfigYAML();
+        void WriteConfigYAML(std::filesystem::path const& projectRoot);
         std::string GetName();
         bool CreateTemplate();
         static std::vector<std::filesystem::path> GetPaths(std::vector<Model3D> const& models);
         std::vector<std::filesystem::path> GetWindFiles() const;
         std::filesystem::path GetSimulationFilePath(std::string_view name) { return rootDirectory / "simulations" / name / "sim.yaml"; }
+        std::filesystem::path GetConfigFilePath() { return rootDirectory / "config.yaml"; }
 
     public:
         std::vector<Model3D> envModels;

@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
 project(gaden_core)
+
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS_DEBUG "-glldb -O0")
 
 find_package(OpenMP)
 find_package(fmt)

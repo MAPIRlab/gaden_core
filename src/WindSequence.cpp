@@ -1,6 +1,7 @@
 #include "gaden/core/GadenVersion.hpp"
 #include "gaden/core/Logging.hpp"
 #include "gaden/internal/MathUtils.hpp"
+#include "gaden/internal/PathUtils.hpp"
 #include <fstream>
 #include <gaden/internal/WindSequence.hpp>
 
@@ -77,6 +78,7 @@ namespace gaden
     {
         try
         {
+            paths::TryCreateDirectory(directory);
             for (size_t i = 0; i < windMaps.size(); i++)
             {
                 std::ofstream output(directory / fmt::format("{}_{}", namePrefix, i));

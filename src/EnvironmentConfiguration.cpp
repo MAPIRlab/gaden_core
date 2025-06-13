@@ -36,7 +36,7 @@ namespace gaden
             if (!std::filesystem::exists(path))
             {
                 GADEN_INFO("Output directory '{}' does not exist. Trying to create it.", path.c_str());
-                if (!std::filesystem::create_directory(path))
+                if (!std::filesystem::create_directories(path))
                 {
                     GADEN_ERROR("Failed to create output directory!");
                     return false;

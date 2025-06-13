@@ -36,8 +36,9 @@ namespace gaden
         compressedBuffer.resize(maxBufferSize);
         localAirflowDisturbances.resize(config.environment.numCells(), Vector3(0, 0, 0));
 
+        paths::TryCreateDirectory(parameters.saveDataDirectory);
         if (parameters.saveResults)
-            GADEN_INFO("Saving results in directory '{}'", parameters.saveDataDirectory / "result");
+            GADEN_INFO("Saving results in directory '{}'", parameters.saveDataDirectory);
     }
 
     void RunningSimulation::AdvanceTimestep()
@@ -190,8 +191,7 @@ namespace gaden
     void RunningSimulation::SaveResults()
     {
         // check we can create the file
-        std::filesystem::path savePath = parameters.saveDataDirectory / "result";
-        paths::TryCreateDirectory(savePath);
+        std::filesystem::path savePath = parameters.saveDataDirectory;
 
         // Configure file name for saving the current snapshot
         std::filesystem::path path = fmt::format("{}/iteration_{}", savePath, last_saved_step);
@@ -233,7 +233,7 @@ namespace gaden
         {
             const YAML::Node yaml = YAML::LoadFile(path);
 
-            saveDataDirectory = path.parent_path();
+            saveDataDirectory = path.parent_path() / "result";
 
             // clang-format off
             FromYAML<GasType>   (yaml, "gasType",                   gasType);

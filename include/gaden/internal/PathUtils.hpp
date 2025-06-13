@@ -9,7 +9,7 @@ namespace gaden::paths
     {
         if (!std::filesystem::exists(path))
         {
-            if (!std::filesystem::create_directory(path))
+            if (!std::filesystem::create_directories(path))
             {
                 GADEN_WARN("Cannot create directory '{}'", path);
                 GADEN_TERMINATE;

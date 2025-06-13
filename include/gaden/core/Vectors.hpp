@@ -42,6 +42,12 @@ namespace gaden
         }
 
         template <typename Vec>
+        inline Vec ceil(const Vec& a)
+        {
+            return glm::ceil(a);
+        }
+
+        template <typename Vec>
         inline Vec rotate(const Vec& vec, float signedAngleRadians)
         {
             return glm::rotate(vec, signedAngleRadians);

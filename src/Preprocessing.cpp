@@ -34,7 +34,7 @@ namespace gaden
         boundingBox.Grow(findDimensions(allObstacleTriangles));
         boundingBox.Grow(findDimensions(allOutletTriangles));
 
-        Vector3i dimensions = (boundingBox.max - boundingBox.min) / cellSize;
+        Vector3i dimensions = vmath::ceil((boundingBox.max - boundingBox.min) / cellSize);
         Environment environment{
             .versionMajor = gaden::version_major,
             .versionMinor = gaden::version_minor,

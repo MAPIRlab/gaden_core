@@ -73,6 +73,13 @@ namespace gaden
         return *activeFilaments;
     }
 
+    Vector3 RunningSimulation::SampleWind(const Vector3i& indices) const
+    {
+        size_t cellIndex = config.environment.indexFrom3D(indices);
+        gaden::Vector3 windVec = config.windSequence.GetCurrent().at(cellIndex) + localAirflowDisturbances.at(cellIndex);
+        return windVec;
+    }
+
     void RunningSimulation::AddFilaments()
     {
         float numFilaments_iteration = parameters.numFilaments_sec * parameters.deltaTime;
@@ -133,8 +140,7 @@ namespace gaden
             // 1. Simulate Advection (Va)
             //    Large scale wind-eddies -> Movement of a filament as a whole by wind
             //------------------------------------------------------------------------
-            size_t cellIndex = config.environment.indexFrom3D(cellIdx);
-            gaden::Vector3 windVec = config.windSequence.GetCurrent().at(cellIndex) + localAirflowDisturbances.at(cellIndex);
+            gaden::Vector3 windVec =  SampleWind(cellIdx);
             Vector3 newPosition = filament.position + windVec * parameters.deltaTime;
 
             // 2. Simulate Gravity & Bouyant Force

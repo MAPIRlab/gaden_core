@@ -3,12 +3,6 @@
 
 namespace gaden
 {
-
-    Vector3 Simulation::SampleWind(const Vector3& point) const
-    {
-        return SampleWind(config.environment.coordsToIndices(point));
-    }
-
     bool Simulation::CheckLineOfSight(Vector3 start, Vector3 end) const
     {
         // Check whether one of the points is outside the valid environment or is not free
@@ -86,4 +80,8 @@ namespace gaden
         return config.windSequence.GetCurrent().at(config.environment.indexFrom3D(indices));
     }
 
+    Vector3 Simulation::SampleWind(const Vector3& point) const
+    {
+        return SampleWind(config.environment.coordsToIndices(point));
+    }
 } // namespace gaden

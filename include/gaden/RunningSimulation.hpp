@@ -39,6 +39,9 @@ namespace gaden
         const std::vector<Filament>& GetFilaments() const override;
         float GetCurrentTime() { return currentTime; }
         const Parameters& GetParameters(){return parameters;}
+
+        Vector3 SampleWind(const Vector3i& indices) const override;
+
     public:
         std::vector<Vector3> localAirflowDisturbances; // small-scale changes to airflow that happen at runtime.
                                                        // To be modified from the outside according to whatever model the user code wants to employ.

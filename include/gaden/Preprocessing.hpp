@@ -32,7 +32,7 @@ namespace gaden
         };
 
         static Preprocessing::BoundingBox findDimensions(const std::vector<Triangle>& triangles);
-        static void occupy(std::vector<Triangle>& triangles, Environment& env, Environment::CellState value_to_write);
-        static void fill(Environment& environment, Vector3 empty_point);
+        static void Occupy(std::vector<Triangle>& triangles, Environment& env, Environment::CellState value_to_write);
+        static void Fill(Environment& environment, Vector3 empty_point);
     };
 } // namespace gaden

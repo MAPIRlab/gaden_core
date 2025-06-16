@@ -47,10 +47,10 @@ namespace gaden
 
         // fill in the environment cell grid
         //---------------------------------------
-        occupy(allObstacleTriangles, environment, Environment::CellState::Obstacle);
-        occupy(allOutletTriangles, environment, Environment::CellState::Outlet);
+        Occupy(allObstacleTriangles, environment, Environment::CellState::Obstacle);
+        Occupy(allOutletTriangles, environment, Environment::CellState::Outlet);
 
-        fill(environment, emptyPoint);
+        Fill(environment, emptyPoint);
         return environment;
     }
 
@@ -174,7 +174,7 @@ namespace gaden
         return boundingBox;
     }
 
-    void Preprocessing::occupy(std::vector<Triangle>& triangles, Environment& env, Environment::CellState value_to_write)
+    void Preprocessing::Occupy(std::vector<Triangle>& triangles, Environment& env, Environment::CellState value_to_write)
     {
         int numberOfProcessedTriangles = 0; // for logging, doesn't actually do anything
         std::mutex mtx;
@@ -225,17 +225,17 @@ namespace gaden
             }
 
             // log progress
-            if (i > numberOfProcessedTriangles + triangles.size() / 10)
-            {
-                mtx.lock();
-                GADEN_INFO("{}%", (int)((100 * i) / triangles.size()));
-                numberOfProcessedTriangles = i;
-                mtx.unlock();
-            }
+            // if (i > numberOfProcessedTriangles + triangles.size() / 10)
+            // {
+            //     mtx.lock();
+            //     GADEN_INFO("{}%", (int)((100 * i) / triangles.size()));
+            //     numberOfProcessedTriangles = i;
+            //     mtx.unlock();
+            // }
         }
     }
 
-    void Preprocessing::fill(Environment& environment, Vector3 emptyPoint)
+    void Preprocessing::Fill(Environment& environment, Vector3 emptyPoint)
     {
         // essentially a flood fill algorithm
         // start from emptyPoint, and replace any uninitialized cells you find with free ones

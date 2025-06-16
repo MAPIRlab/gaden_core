@@ -17,6 +17,12 @@ namespace gaden
     {
         config.windSequence.loopConfig = parameters.windLoop;
 
+        // this is a backwards compatibility hack
+        // noise used to not consider deltaTime (bad), now it does (good)
+        // however, that means that old configuration files will now behave differently (bad)
+        // so, to keep things more or less the same (good), we will scale the noise std by the most commonly used delta time -- 1/10th of a second
+        parameters.filament_noise_std *= 10;
+
         filaments1.reserve(params.expectedNumIterations * params.numFilaments_sec / params.deltaTime);
         filaments2.reserve(params.expectedNumIterations * params.numFilaments_sec / params.deltaTime);
         activeFilaments = &filaments1;
@@ -53,7 +59,10 @@ namespace gaden
         }
 
         if (currentTime > lastWindUpdateTime + parameters.windIterationDeltaTime)
+        {
             config.windSequence.AdvanceTimeStep();
+            lastWindUpdateTime = currentTime;
+        }
 
         currentTime += parameters.deltaTime;
         currentIteration++;
@@ -70,10 +79,21 @@ namespace gaden
 
         releaseAccumulator += numFilaments_iteration;
 
-        for (size_t i = 0; i < releaseAccumulator; i++)
+        for (size_t i = 0; i < std::floor(releaseAccumulator); i++)
         {
-            Vector3 randomOffset = config.environment.description.cellSize * Vector3{uniformRandom(-1, 1), uniformRandom(-1, 1), uniformRandom(-1, 1)};
-            Vector3 position = parameters.sourcePosition + randomOffset;
+            constexpr size_t safetyLimit = 10;
+            size_t attempts = 0;
+
+            Vector3 position;
+            do
+            {
+                Vector3 randomOffset = config.environment.description.cellSize * Vector3{uniformRandom(-1, 1), uniformRandom(-1, 1), uniformRandom(-1, 1)};
+                position = parameters.sourcePosition + randomOffset;
+                attempts++;
+            } while (!config.environment.IsInBounds(position) && attempts < safetyLimit);
+
+            GADEN_VERIFY(attempts < safetyLimit, "Could not spawn filaments around source position! Is it inside the environment bounds?");
+
             activeFilaments->emplace_back(position, parameters.filament_initial_sigma);
         }
 
@@ -133,9 +153,9 @@ namespace gaden
             // 3. Add some variability (stochastic process)
             //------------------------------------
 
-            newPosition.x += gaussian.nextValue(0, parameters.filament_noise_std);
-            newPosition.y += gaussian.nextValue(0, parameters.filament_noise_std);
-            newPosition.z += gaussian.nextValue(0, parameters.filament_noise_std);
+            newPosition.x += gaussian.nextValue(0, parameters.filament_noise_std) * parameters.deltaTime;
+            newPosition.y += gaussian.nextValue(0, parameters.filament_noise_std) * parameters.deltaTime;
+            newPosition.z += gaussian.nextValue(0, parameters.filament_noise_std) * parameters.deltaTime;
 
             // 4. Check filament location
             //------------------------------------

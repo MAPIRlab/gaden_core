@@ -64,6 +64,7 @@ namespace gaden
             indexCurrent = loopConfig.from;
         else if (indexCurrent >= windMaps.size())
             indexCurrent = windMaps.size() - 1;
+        // GADEN_INFO("Using timestep {}", indexCurrent);
     }
 
     void WindSequence::SetCurrentIndex(size_t index)

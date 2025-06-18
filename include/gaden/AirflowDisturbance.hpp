@@ -2,18 +2,13 @@
 
 #include "gaden/Environment.hpp"
 #include "gaden/datatypes/GasTypes.hpp"
-#include "gaden/internal/MathUtils.hpp"
 
 namespace gaden::Airflow
 {
     // from https://ieeexplore.ieee.org/document/10804051
     //------------------------------------------------------------
-    class QuadrotorDisturbance
+    class QuadrotorDisturbanceFarField
     {
-        //  calculates the airflow velocity caused by a hovering quadrotor at point (r,s)
-        //  r : radial distance
-        //  s : flow-direction distance
-        //  l : motor distance
     public:
         static void ModifyField(Vector3 dronePosition,
                                 std::vector<Vector3>& airflowField,
@@ -24,7 +19,7 @@ namespace gaden::Airflow
                                 float pressure,
                                 float temperature)
         {
-#pragma omp parallel for
+            #pragma omp parallel for
             for (size_t i = 0; i < airflowField.size(); i++)
             {
                 Vector3 coordsPoint = env.coordsOfCellCenter(env.indicesFrom1D(i));
@@ -36,12 +31,16 @@ namespace gaden::Airflow
             }
         }
 
+        //  calculates the airflow velocity caused by a hovering quadrotor at point (r,s)
+        //  r : radial distance
+        //  s : flow-direction distance
+        //  l : motor distance
         static float Speed(float r, float s,
-                              float motorDistance,
-                              float droneMass,
-                              float rotorRadius,
-                              float pressure,
-                              float temperature)
+                           float motorDistance,
+                           float droneMass,
+                           float rotorRadius,
+                           float pressure,
+                           float temperature)
         {
             float halfw = JetHalfWidth(s);
             r = r / motorDistance;
@@ -54,7 +53,9 @@ namespace gaden::Airflow
             float initialJetVelocity = sqrt((droneMass * 9.8) / (2 * AirDensity(pressure, temperature) * M_PI * rotorRadius * rotorRadius) * np);
 
             float denominator = (1 + (sqrt(2) - 1) * xi * xi);
-            return CenterlineVelocity(s, initialJetVelocity) / (denominator * denominator);
+            float centerLineV = CenterlineVelocity(s, initialJetVelocity);
+            float speed = centerLineV / (denominator * denominator);
+            return speed;
         }
 
     private:
@@ -67,16 +68,16 @@ namespace gaden::Airflow
 
         static float JetHalfWidth(float s)
         {
-            constexpr float spreadingAngle = 12.f * Deg2Rad;
-            const float spreadingRate = std::tan(spreadingAngle / 2.f);
-
-            return spreadingRate * (s - s0);
+            const float spreadingRate = 0.07668;
+            return spreadingRate * (s - s0) + 0.1;
         }
 
         static float AirDensity(float pressure, float temperature)
         {
             constexpr float M = 28.966;
-            return pressure * M / (R * temperature);
+            const float r = R * 0.001;                        // express gas constant in L*atm / mol*K
+            float density = pressure * M / (r * temperature); // g/L, which is equivalent to kg/m^3
+            return density;
         }
 
     private:

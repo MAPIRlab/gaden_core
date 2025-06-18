@@ -7,7 +7,7 @@ namespace gaden
 {
 
     EnvironmentConfigMetadata::EnvironmentConfigMetadata(std::filesystem::path const& directory)
-        : rootDirectory(directory)
+        : rootDirectory(std::filesystem::canonical(directory))
     {
     }
 

@@ -6,6 +6,9 @@ set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS_DEBUG "-glldb -O0")
 
+# generate a python module with bindings to access the library from your python scripts
+set(GENERATE_PYTHON_BINDINGS OFF) # requires cppyy. See the readme!
+
 find_package(OpenMP)
 find_package(fmt)
 find_package(ZLIB)
@@ -40,3 +43,9 @@ target_link_libraries(gaden
 # Utility executables for dealing with different file formats involved in gaden simulation 
 add_subdirectory(utils/STL)
 add_subdirectory(utils/decompress)
+
+
+# Generate python bindings
+if(GENERATE_PYTHON_BINDINGS)
+    include(cmake/PythonBindings.cmake)
+endif()

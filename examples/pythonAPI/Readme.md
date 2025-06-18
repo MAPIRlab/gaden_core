@@ -1,0 +1,2 @@
+# Python bindings usage
+**After** building into `(repo root)/build`, run the [CreateLink](CreateLink.sh) script to make the bindings module accessible here. Then, you can access the library as seen in the [RunSimulation](RunSimulation.py) example. 

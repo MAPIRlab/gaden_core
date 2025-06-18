@@ -9,6 +9,7 @@ You can generate Python bindings for the gaden core library with [cppyy](https:/
 Creating these bindings requires the following dependencies:
 
 ```
+pip install wheel
 pip install cppyy
 pip install libclang==13
 sudo apt install libclang-13-dev

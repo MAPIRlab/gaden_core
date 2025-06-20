@@ -2,7 +2,7 @@
 
 #include "gaden/RunningSimulation.hpp"
 #include <filesystem>
-#include <gaden/PlaybackSimulation.hpp>
+#include "gaden/PlaybackScene.hpp"
 #include <map>
 #include <optional>
 #include <string>
@@ -15,13 +15,6 @@ namespace gaden
         using SimulationParams = RunningSimulation::Parameters;
 
     public:
-        struct PlaybackMetadata
-        {
-            std::vector<PlaybackSimulation::Parameters> params;
-            std::vector<Color> gasDisplayColor;
-            LoopConfig loop;
-            void ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot);
-        };
 
         EnvironmentConfigMetadata(std::filesystem::path const& directory);
         ReadResult ReadDirectory();
@@ -43,7 +36,7 @@ namespace gaden
         std::string unprocessedWindFiles; // the path, as appears in the configuration file (without the _i.csv suffix)
 
         std::map<std::string, SimulationParams> simulations;
-        std::map<std::string, PlaybackMetadata> playbacks;
+        std::map<std::string, PlaybackSceneMetadata> playbacks;
         std::filesystem::path rootDirectory;
 
     private:

@@ -23,10 +23,9 @@ namespace gaden
         std::vector<GasType> GetGasTypes();
 
         std::vector<PlaybackSimulation> const& GetSimulations();
-        std::vector<gaden::Color> const& GetColors();
+        std::vector<gaden::Color> GetColors();
 
     private:
-        std::vector<gaden::Color> gasDisplayColors;
         std::vector<PlaybackSimulation> simulations;
     };
 } // namespace gaden

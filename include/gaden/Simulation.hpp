@@ -29,5 +29,7 @@ namespace gaden
     public:
         EnvironmentConfiguration config;
         SimulationMetadata simulationMetadata;
+
+        Color gasDisplayColor = {0.4, 0.4, 0.4, 1};
     };
 } // namespace gaden

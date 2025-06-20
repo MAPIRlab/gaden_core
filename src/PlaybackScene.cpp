@@ -28,13 +28,14 @@ namespace gaden
         }
     }
 
-    // currently the colors are only used by the gaden frontend, so they are not stored here at all.
-    //  If we create a visualization for the gas dispersion in gaden_gui, we'll need to change that
     PlaybackScene::PlaybackScene(PlaybackSceneMetadata const& metadata, EnvironmentConfiguration const& env)
     {
         GADEN_VERIFY(!metadata.params.empty(), "Cannot create an empty playback scene");
         for (size_t i = 0; i < metadata.params.size(); i++)
-            simulations.emplace_back(metadata.params.at(i), env, metadata.loop);
+        {
+            PlaybackSimulation& sim = simulations.emplace_back(metadata.params.at(i), env, metadata.loop);
+            sim.gasDisplayColor = metadata.gasDisplayColors.at(i);
+        }
     }
 
     void PlaybackScene::AdvanceTimestep()
@@ -77,9 +78,12 @@ namespace gaden
         return simulations;
     }
 
-    std::vector<gaden::Color> const& PlaybackScene::GetColors()
+    std::vector<gaden::Color> PlaybackScene::GetColors()
     {
-        return gasDisplayColors;
+        std::vector<Color> colors;
+        for (auto& sim : simulations)
+            colors.push_back(sim.gasDisplayColor);
+        return colors;
     }
 
 } // namespace gaden

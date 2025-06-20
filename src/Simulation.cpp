@@ -50,11 +50,7 @@ namespace gaden
 
     float Simulation::SampleConcentration(const Vector3& samplePoint) const
     {
-        Vector3i indices = config.environment.coordsToIndices(samplePoint);
-
-        if (indices.x < 0 || indices.x > config.environment.description.dimensions.x    //
-            || indices.y < 0 || indices.y > config.environment.description.dimensions.y //
-            || indices.z < 0 || indices.z > config.environment.description.dimensions.z)
+        if (!config.environment.IsInBounds(samplePoint))
         {
             GADEN_ERROR("Requested gas concentration at a point outside the environment {}. Are you using the correct coordinates?", samplePoint);
             return 0;

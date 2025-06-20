@@ -211,7 +211,7 @@ temperature: 298.0
 pressure: 1.0                
 filament_ppm_center: 10.0         
 filament_initial_std: 10.0         
-filament_growth_gamma: 10.0        
+filament_growth_gamma: 15.0        
 filament_noise_std: 0.02           
 
 saveResults: true

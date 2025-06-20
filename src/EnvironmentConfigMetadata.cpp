@@ -37,7 +37,7 @@ namespace gaden
             std::vector<std::filesystem::path> playbackConfigs = paths::GetAllFilesInDirectory(rootDirectory / "playbacks");
             for (std::filesystem::path const& playbackFile : playbackConfigs)
             {
-                PlaybackMetadata metadata;
+                PlaybackSceneMetadata metadata;
                 metadata.ReadFromYAML(playbackFile, rootDirectory);
                 playbacks[playbackFile.stem()] = metadata;
                 GADEN_INFO("Found playback configuration: {}", playbackFile.stem());
@@ -158,28 +158,6 @@ namespace gaden
         for (const auto& m : models)
             paths.push_back(m.path);
         return paths;
-    }
-
-    void EnvironmentConfigMetadata::PlaybackMetadata::ReadFromYAML(std::filesystem::path const& yamlPath, std::filesystem::path const& EnvConfigurationMetadataRoot)
-    {
-        YAML::Node yaml = YAML::LoadFile(yamlPath);
-
-        size_t startIteration = yaml["initial_iteration"].as<size_t>();
-        loop = ParseLoopYAML(yaml["playback_loop"]);
-        YAML::Node simulations = yaml["simulations"];
-
-        params.resize(simulations.size());
-        gasDisplayColor.resize(simulations.size());
-        for (size_t i = 0; i < simulations.size(); i++)
-        {
-            params.at(i).startIteration = startIteration;
-            params.at(i).resultsDirectory = EnvConfigurationMetadataRoot / "simulations" / simulations[i]["sim"].as<std::string>() / "result";
-
-            auto color_vec = simulations[i]["gas_color"].as<std::vector<float>>();
-            gasDisplayColor.at(i).r = color_vec[0];
-            gasDisplayColor.at(i).g = color_vec[1];
-            gasDisplayColor.at(i).b = color_vec[2];
-        }
     }
 
     bool EnvironmentConfigMetadata::CreateTemplate()

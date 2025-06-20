@@ -18,10 +18,13 @@ namespace gaden
             params.at(i).startIteration = startIteration;
             params.at(i).resultsDirectory = EnvConfigurationMetadataRoot / "simulations" / simulations[i]["sim"].as<std::string>() / "result";
 
-            auto color_vec = simulations[i]["gas_color"].as<std::vector<float>>();
+            std::vector<float> color_vec{0.4, 0.4, 0.4};
+            if (YAML::Node node = simulations[i]["gas_color"])
+                color_vec = node.as<std::vector<float>>();
             gasDisplayColors.at(i).r = color_vec[0];
             gasDisplayColors.at(i).g = color_vec[1];
             gasDisplayColors.at(i).b = color_vec[2];
+            gasDisplayColors.at(i).a = 1;
         }
     }
 

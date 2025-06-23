@@ -28,8 +28,6 @@ add_executable([your_exec])
 target_link_libraries([your_exec] gaden)
 ```
 
-TO-DO detailed instructions for usage in C++
-
 
 ## Python bindings
 You can generate Python bindings for the gaden core library with [cppyy](https://cppyy.readthedocs.io/en/latest/). To generate them, simply enable the corresponding option in the [CMakeLists.txt](CMakeLists.txt) before building.

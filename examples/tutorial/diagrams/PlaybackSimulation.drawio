@@ -21,11 +21,6 @@
         <mxCell id="ayrzzpna5QH0cfRAlzxf-7" value="Playback&lt;div&gt;Metadata&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
           <mxGeometry x="330" y="80" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" target="ayrzzpna5QH0cfRAlzxf-7" edge="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="290" y="110" as="sourcePoint" />
-          </mxGeometry>
-        </mxCell>
         <mxCell id="ayrzzpna5QH0cfRAlzxf-46" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;fillColor=#000000;strokeColor=none;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="549.5" as="sourcePoint" />

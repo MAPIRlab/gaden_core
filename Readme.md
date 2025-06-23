@@ -1,6 +1,8 @@
 # Gaden core library
 Gaden is a gas dispersion simulator! This repo contains the backend core library, which can also be included directly in your C++ project, or accessed through the [ROS](https://github.com/MAPIRlab/gaden) and [GUI](https://github.com/MAPIRlab/gaden_gui) frontends.
 
+See the [tutorial](examples/tutorial/) for basic info on the data types that this library defines and how to use them.
+
 ## Installation and building
 If you plan to use one of the frontends, don't download this repo separately. Instead, follow the instructions in the corresponding repo.
 

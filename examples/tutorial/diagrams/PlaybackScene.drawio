@@ -1,0 +1,124 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/27.0.9 Chrome/134.0.6998.205 Electron/35.4.0 Safari/537.36" version="27.0.9">
+  <diagram name="Page-1" id="a3106Rld3nqsuqSQHuJ1">
+    <mxGraphModel dx="2253" dy="883" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-27" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=2;arcSize=5;strokeColor=#868686;" parent="1" vertex="1">
+          <mxGeometry x="57.03" y="330" width="240" height="235" as="geometry" />
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeWidth=2;arcSize=5;strokeColor=#868686;" parent="1" vertex="1">
+          <mxGeometry x="310" y="60" width="460" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="ayrzzpna5QH0cfRAlzxf-7" value="Playback&lt;div&gt;Metadata&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="330" y="80" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="ayrzzpna5QH0cfRAlzxf-8" target="ayrzzpna5QH0cfRAlzxf-7" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ayrzzpna5QH0cfRAlzxf-8" value="&lt;blockquote style=&quot;margin: 0px 0px 0px 15px; border: none; padding: 0px;&quot;&gt;&lt;font face=&quot;Droid Sans Mono, monospace, monospace&quot; style=&quot;color: rgb(163, 249, 127); font-size: 13px;&quot;&gt;&lt;font style=&quot;&quot;&gt;PlaybackMetadata&lt;/font&gt;::&lt;/font&gt;&lt;div style=&quot;margin-left: 10px;&quot;&gt;&lt;font face=&quot;Droid Sans Mono, monospace, monospace&quot; style=&quot;color: rgb(236, 233, 166); font-size: 13px;&quot;&gt;ReadFromYAML()&lt;/font&gt;&lt;/div&gt;&lt;/blockquote&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#303237;strokeColor=#666666;fontColor=#333333;align=left;" parent="1" vertex="1">
+          <mxGeometry x="120" y="80" width="170" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="ayrzzpna5QH0cfRAlzxf-15" target="ayrzzpna5QH0cfRAlzxf-8" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ayrzzpna5QH0cfRAlzxf-15" value="scene.yaml" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="-30" y="80" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ayrzzpna5QH0cfRAlzxf-46" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;fillColor=#000000;strokeColor=none;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="29.590000000000003" y="16" as="sourcePoint" />
+            <mxPoint x="29.590000000000003" y="76" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-1" value="Environment Configuration" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="470" y="80" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="j4ynjjWQNKRZf8Y-CPZ6-8" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="537.2204761904761" y="482.51" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-8" value="Simulation Finished?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="482.03" y="337.51" width="110" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="j4ynjjWQNKRZf8Y-CPZ6-11" target="j4ynjjWQNKRZf8Y-CPZ6-8" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="417.03" y="402.51" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="537.03" y="557.51" />
+              <mxPoint x="417.03" y="557.51" />
+              <mxPoint x="417.03" y="392.51" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-11" value="&lt;blockquote style=&quot;margin: 0px 0px 0px 15px; border: none; padding: 0px;&quot;&gt;&lt;font face=&quot;Droid Sans Mono, monospace, monospace&quot; style=&quot;color: rgb(163, 249, 127); font-size: 13px;&quot;&gt;&lt;font style=&quot;&quot;&gt;PlaybackScene&lt;/font&gt;::&lt;/font&gt;&lt;div style=&quot;margin-left: 10px;&quot;&gt;&lt;font face=&quot;Droid Sans Mono, monospace, monospace&quot; style=&quot;color: rgb(236, 233, 166); font-size: 13px;&quot;&gt;AdvanceTimestep()&lt;/font&gt;&lt;/div&gt;&lt;/blockquote&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#303237;strokeColor=#666666;fontColor=#333333;align=left;" parent="1" vertex="1">
+          <mxGeometry x="454.07" y="482.51" width="165.93" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-12" value="No" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="519.06" y="447.51" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-17" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="610" y="70" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-19" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="620" y="80" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-18" value="simulation results" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="630" y="90" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-24" value="&lt;blockquote style=&quot;margin: 0px 0px 0px 15px; border: none; padding: 0px;&quot;&gt;&lt;font face=&quot;Droid Sans Mono, monospace, monospace&quot; style=&quot;color: rgb(163, 249, 127); font-size: 13px;&quot;&gt;&lt;font style=&quot;&quot;&gt;PlaybackScene&lt;/font&gt;::&lt;/font&gt;&lt;div style=&quot;margin-left: 10px;&quot;&gt;&lt;font face=&quot;Droid Sans Mono, monospace, monospace&quot; style=&quot;color: rgb(236, 233, 166); font-size: 13px;&quot;&gt;SampleConcentrations()&lt;/font&gt;&lt;/div&gt;&lt;/blockquote&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#303237;strokeColor=#666666;fontColor=#333333;align=left;" parent="1" vertex="1">
+          <mxGeometry x="77.03" y="350" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-25" value="&lt;blockquote style=&quot;margin: 0px 0px 0px 15px; border: none; padding: 0px;&quot;&gt;&lt;font face=&quot;Droid Sans Mono, monospace, monospace&quot; style=&quot;color: rgb(163, 249, 127); font-size: 13px;&quot;&gt;&lt;font style=&quot;&quot;&gt;PlaybackScene&lt;/font&gt;::&lt;/font&gt;&lt;div style=&quot;margin-left: 10px;&quot;&gt;&lt;font face=&quot;Droid Sans Mono, monospace, monospace&quot; style=&quot;color: rgb(236, 233, 166); font-size: 13px;&quot;&gt;SampleWind()&lt;/font&gt;&lt;/div&gt;&lt;/blockquote&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#303237;strokeColor=#666666;fontColor=#333333;align=left;" parent="1" vertex="1">
+          <mxGeometry x="77.03" y="420" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-26" value="&lt;blockquote style=&quot;margin: 0px 0px 0px 15px; border: none; padding: 0px;&quot;&gt;&lt;font face=&quot;Droid Sans Mono, monospace, monospace&quot; style=&quot;color: rgb(163, 249, 127); font-size: 13px;&quot;&gt;&lt;font style=&quot;&quot;&gt;PlaybackScene&lt;/font&gt;::&lt;/font&gt;&lt;div style=&quot;margin-left: 10px;&quot;&gt;&lt;font face=&quot;Droid Sans Mono, monospace, monospace&quot; style=&quot;color: rgb(236, 233, 166); font-size: 13px;&quot;&gt;GetSimulations()&lt;/font&gt;&lt;/div&gt;&lt;/blockquote&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#303237;strokeColor=#666666;fontColor=#333333;align=left;" parent="1" vertex="1">
+          <mxGeometry x="77.03" y="490" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-28" value="" style="endArrow=classic;html=1;rounded=0;exitX=1.003;exitY=0.594;exitDx=0;exitDy=0;dashed=1;strokeColor=#868686;exitPerimeter=0;" parent="1" source="j4ynjjWQNKRZf8Y-CPZ6-27" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="297.03" y="471.5" as="sourcePoint" />
+            <mxPoint x="417" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="j4ynjjWQNKRZf8Y-CPZ6-29" value="&lt;font style=&quot;color: rgb(134, 134, 134);&quot;&gt;Query&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="316.03" y="447" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="TD0UIJbStgnqrXHzQO8T-1" value="Playback Simulation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="720" y="210" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="TD0UIJbStgnqrXHzQO8T-2" value="Playback Simulation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="730" y="220" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="TD0UIJbStgnqrXHzQO8T-3" value="Playback Simulation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="740" y="230" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="TD0UIJbStgnqrXHzQO8T-4" value="Playback&amp;nbsp;&lt;div&gt;Scene&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="480" y="220" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="TD0UIJbStgnqrXHzQO8T-5" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="j4ynjjWQNKRZf8Y-CPZ6-2" target="TD0UIJbStgnqrXHzQO8T-4" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="580" y="310" as="sourcePoint" />
+            <mxPoint x="630" y="260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TD0UIJbStgnqrXHzQO8T-6" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.474;exitY=1.01;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitPerimeter=0;" parent="1" source="TD0UIJbStgnqrXHzQO8T-4" target="j4ynjjWQNKRZf8Y-CPZ6-8" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="550" y="180" as="sourcePoint" />
+            <mxPoint x="550" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TD0UIJbStgnqrXHzQO8T-7" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=-0.009;entryY=0.683;entryDx=0;entryDy=0;entryPerimeter=0;dashed=1;strokeColor=#868686;" parent="1" source="TD0UIJbStgnqrXHzQO8T-4" target="TD0UIJbStgnqrXHzQO8T-1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="650" y="320" as="sourcePoint" />
+            <mxPoint x="700" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TD0UIJbStgnqrXHzQO8T-8" value="&lt;font style=&quot;color: rgb(134, 134, 134);&quot;&gt;Contains&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Droid Sans Mono, monospace, monospace;" parent="1" vertex="1">
+          <mxGeometry x="610" y="225" width="90" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

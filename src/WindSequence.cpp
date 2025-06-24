@@ -84,8 +84,8 @@ namespace gaden
             {
                 std::ofstream output(directory / fmt::format("{}_{}", namePrefix, i));
 
-                output.write((char*)&gaden::version_major, sizeof(int));
-                output.write((char*)&gaden::version_minor, sizeof(int));
+                output.write((char*)&gaden::versionMajor, sizeof(int));
+                output.write((char*)&gaden::versionMinor, sizeof(int));
                 output.write((char*)windMaps.at(i).data(), sizeof(gaden::Vector3) * windMaps.at(i).size());
 
                 output.close();

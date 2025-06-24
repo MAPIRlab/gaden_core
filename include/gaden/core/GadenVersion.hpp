@@ -2,6 +2,6 @@
 
 namespace gaden
 {
-    constexpr int version_major = 3;
-    constexpr int version_minor = 0;
+    constexpr int versionMajor = 3;
+    constexpr int versionMinor = 0;
 }

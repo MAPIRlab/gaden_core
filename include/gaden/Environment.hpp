@@ -55,8 +55,8 @@ namespace gaden
         bool printBasicSimYaml(const std::filesystem::path& path, Vector3 startingPoint);
 
     public:
-        int versionMajor = gaden::version_major,
-            versionMinor = gaden::version_minor; // version of gaden used to generate a log file. Used to figure out how to parse the binary format
+        int versionMajor = gaden::versionMajor,
+            versionMinor = gaden::versionMinor; // version of gaden used to generate a log file. Used to figure out how to parse the binary format
 
         Description description;
 

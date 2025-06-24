@@ -36,8 +36,8 @@ namespace gaden
 
         Vector3i dimensions = vmath::ceil((boundingBox.max - boundingBox.min) / cellSize);
         Environment environment{
-            .versionMajor = gaden::version_major,
-            .versionMinor = gaden::version_minor,
+            .versionMajor = gaden::versionMajor,
+            .versionMinor = gaden::versionMinor,
             .description = Environment::Description{
                 .dimensions = dimensions,
                 .minCoord = boundingBox.min,

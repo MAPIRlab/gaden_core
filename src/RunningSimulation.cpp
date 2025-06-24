@@ -225,8 +225,8 @@ namespace gaden
         // write all the data as-is into a buffer, which we will then compress
         BufferWriter writer((char*)rawBuffer.data(), rawBuffer.size());
 
-        writer.Write(&gaden::version_major);
-        writer.Write(&gaden::version_minor);
+        writer.Write(&gaden::versionMajor);
+        writer.Write(&gaden::versionMinor);
 
         writer.Write(&config.environment.description);
 

@@ -19,7 +19,7 @@ add_library(gaden SHARED
     src/CoppeliaSim.cpp
     src/Environment.cpp
     src/EnvironmentConfiguration.cpp
-    src/PlaybackScene.cpp
+    src/Scene.cpp
     src/PlaybackSimulation.cpp
     src/Preprocessing.cpp
     src/EnvironmentConfigMetadata.cpp

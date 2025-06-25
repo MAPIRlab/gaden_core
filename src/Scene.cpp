@@ -1,4 +1,4 @@
-#include "gaden/PlaybackScene.hpp"
+#include "gaden/Scene.hpp"
 #include "YAML_Conversions.hpp"
 
 namespace gaden
@@ -28,61 +28,77 @@ namespace gaden
         }
     }
 
-    PlaybackScene::PlaybackScene(PlaybackSceneMetadata const& metadata, EnvironmentConfiguration const& env)
+    void RunningSceneMetadata::ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot)
+    {
+    }
+
+    Scene::Scene(PlaybackSceneMetadata const& metadata, EnvironmentConfiguration const& env)
     {
         GADEN_VERIFY(!metadata.params.empty(), "Cannot create an empty playback scene");
         for (size_t i = 0; i < metadata.params.size(); i++)
         {
-            PlaybackSimulation& sim = simulations.emplace_back(metadata.params.at(i), env, metadata.loop);
-            sim.gasDisplayColor = metadata.gasDisplayColors.at(i);
+            simulations.push_back(std::make_shared<PlaybackSimulation>(metadata.params.at(i), env, metadata.loop));
+            auto& sim = simulations.back();
+            sim->gasDisplayColor = metadata.gasDisplayColors.at(i);
         }
     }
 
-    void PlaybackScene::AdvanceTimestep()
+    Scene::Scene(RunningSceneMetadata const& metadata, EnvironmentConfiguration const& env)
+    {
+        GADEN_VERIFY(!metadata.params.empty(), "Cannot create an empty running scene");
+        for (size_t i = 0; i < metadata.params.size(); i++)
+        {
+            simulations.push_back(std::make_shared<RunningSimulation>(metadata.params.at(i), env));
+            auto& sim = simulations.back();
+            sim->gasDisplayColor = metadata.gasDisplayColors.at(i);
+        }
+    }
+
+    void Scene::AdvanceTimestep()
     {
         for (auto& sim : simulations)
-            sim.AdvanceTimestep();
+            sim->AdvanceTimestep();
     }
 
-    Vector3 PlaybackScene::SampleWind(Vector3 const& point) const
+    Vector3 Scene::SampleWind(Vector3 const& point) const
     {
         // wind must be identical for all simulations in the scene (shared environment configuration)
-        return simulations.at(0).SampleWind(point);
+        return simulations.at(0)->SampleWind(point);
     }
 
-    std::map<GasType, float> PlaybackScene::SampleConcentrations(Vector3 const& point) const
+    std::map<GasType, float> Scene::SampleConcentrations(Vector3 const& point) const
     {
         std::map<GasType, float> gases;
         for (const auto& sim : simulations)
         {
-            GasType type = sim.simulationMetadata.gasType;
+            GasType type = sim->simulationMetadata.gasType;
             float concentration = 0;
             if (gases.contains(type))
                 concentration = gases.at(type);
-            gases[type] = concentration + sim.SampleConcentration(point);
+            gases[type] = concentration + sim->SampleConcentration(point);
         }
 
         return gases;
     }
 
-    std::vector<GasType> PlaybackScene::GetGasTypes()
+    std::vector<GasType> Scene::GetGasTypes()
     {
         std::vector<GasType> types;
         for (auto& sim : simulations)
-            types.push_back(sim.simulationMetadata.gasType);
+            types.push_back(sim->simulationMetadata.gasType);
         return types;
     }
 
-    std::vector<PlaybackSimulation> const& PlaybackScene::GetSimulations()
+    std::vector<std::shared_ptr<Simulation>> const& Scene::GetSimulations()
     {
         return simulations;
     }
 
-    std::vector<gaden::Color> PlaybackScene::GetColors()
+    std::vector<gaden::Color> Scene::GetColors()
     {
         std::vector<Color> colors;
         for (auto& sim : simulations)
-            colors.push_back(sim.gasDisplayColor);
+            colors.push_back(sim->gasDisplayColor);
         return colors;
     }
 

@@ -2,7 +2,7 @@
 
 #include "gaden/RunningSimulation.hpp"
 #include <filesystem>
-#include "gaden/PlaybackScene.hpp"
+#include "gaden/Scene.hpp"
 #include <map>
 #include <optional>
 #include <string>

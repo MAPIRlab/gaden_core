@@ -74,10 +74,7 @@ namespace gaden
     ReadResult Environment::ReadFromFile(const std::filesystem::path& filePath)
     {
         if (!std::filesystem::exists(filePath))
-        {
-            GADEN_ERROR("Could not find environment file '{}'", filePath);
             return ReadResult::NO_FILE;
-        }
 
         std::ifstream infile(filePath.c_str());
         try

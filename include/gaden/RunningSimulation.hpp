@@ -1,6 +1,7 @@
 #pragma once
 #include "Simulation.hpp"
 #include "gaden/EnvironmentConfiguration.hpp"
+#include "gaden/datatypes/sources/PointSource.hpp"
 
 namespace gaden
 {
@@ -9,7 +10,7 @@ namespace gaden
     public:
         struct Parameters
         {
-            std::shared_ptr<GasSource> source;
+            std::shared_ptr<GasSource> source = std::make_shared<PointSource>();
 
             float deltaTime = 0.1;               // seconds
             float windIterationDeltaTime = 1.0;  // seconds

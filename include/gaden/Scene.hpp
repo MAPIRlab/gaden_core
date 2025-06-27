@@ -12,6 +12,7 @@ namespace gaden
         std::vector<Color> gasDisplayColors;
         LoopConfig loop;
         void ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot);
+        void WriteToYAML(std::filesystem::path const& path);
     };
 
     struct RunningSceneMetadata

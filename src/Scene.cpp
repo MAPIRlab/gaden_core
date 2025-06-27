@@ -1,5 +1,6 @@
 #include "gaden/Scene.hpp"
 #include "YAML_Conversions.hpp"
+#include <fstream>
 
 namespace gaden
 {
@@ -7,7 +8,7 @@ namespace gaden
     {
         YAML::Node yaml = YAML::LoadFile(yamlPath);
 
-        size_t startIteration = yaml["initial_iteration"].as<size_t>();
+        size_t startIteration = yaml["playback_initial_iteration"].as<size_t>();
         loop = ParseLoopYAML(yaml["playback_loop"]);
         YAML::Node simulations = yaml["simulations"];
 
@@ -18,9 +19,10 @@ namespace gaden
             params.at(i).startIteration = startIteration;
             params.at(i).resultsDirectory = EnvConfigurationMetadataRoot / "simulations" / simulations[i]["sim"].as<std::string>() / "result";
 
-            std::vector<float> color_vec{0.4, 0.4, 0.4};
+            Vector3 color_vec{0.4, 0.4, 0.4}; // default
             if (YAML::Node node = simulations[i]["gas_color"])
-                color_vec = node.as<std::vector<float>>();
+                color_vec = node.as<Vector3>();
+
             gasDisplayColors.at(i).r = color_vec[0];
             gasDisplayColors.at(i).g = color_vec[1];
             gasDisplayColors.at(i).b = color_vec[2];
@@ -28,8 +30,40 @@ namespace gaden
         }
     }
 
+    void PlaybackSceneMetadata::WriteToYAML(std::filesystem::path const& path)
+    {
+        std::ofstream file(path);
+        YAML::Emitter emitter(file);
+        emitter << YAML::BeginMap;
+
+        emitter << YAML::Key << "playback_initial_iteration" << YAML::Value;
+        if (params.empty())
+            emitter << 0;
+        else
+            emitter << params.at(0).startIteration;
+
+        emitter << YAML::Key << "playback_loop" << YAML::Value;
+        WriteLoopYAML(emitter, loop);
+
+        emitter << YAML::Key << "simulations" << YAML::Value << YAML::Block << YAML::BeginSeq;
+        for (size_t i = 0; i < params.size(); i++)
+        {
+            emitter << YAML::BeginMap;
+            std::string name = params.at(i).resultsDirectory.parent_path().stem();
+            emitter << YAML::Key << "sim" << YAML::Value << name;
+            emitter << YAML::Key << "gas_color" << YAML::Value << YAML::Flow << Vector3(.4, .4, .4);
+            emitter << YAML::EndMap;
+        }
+        emitter << YAML::EndSeq;
+
+        emitter << YAML::EndMap;
+
+        file.close();
+    }
+
     void RunningSceneMetadata::ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot)
     {
+        // TODO
     }
 
     Scene::Scene(PlaybackSceneMetadata const& metadata, EnvironmentConfiguration const& env)

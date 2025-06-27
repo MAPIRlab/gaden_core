@@ -1,5 +1,6 @@
 #include "gaden/EnvironmentConfigMetadata.hpp"
 #include "YAML_Conversions.hpp"
+#include "gaden/datatypes/sources/PointSource.hpp"
 #include "gaden/internal/PathUtils.hpp"
 #include <fstream>
 
@@ -34,12 +35,12 @@ namespace gaden
             }
 
             // read the playback configurations
-            std::vector<std::filesystem::path> playbackConfigs = paths::GetAllFilesInDirectory(rootDirectory / "playbacks");
+            std::vector<std::filesystem::path> playbackConfigs = paths::GetAllFilesInDirectory(rootDirectory / "scenes");
             for (std::filesystem::path const& playbackFile : playbackConfigs)
             {
                 PlaybackSceneMetadata metadata;
                 metadata.ReadFromYAML(playbackFile, rootDirectory);
-                playbacks[playbackFile.stem()] = metadata;
+                scenes[playbackFile.stem()] = metadata;
                 GADEN_INFO("Found playback configuration: {}", playbackFile.stem());
             }
         }
@@ -156,90 +157,30 @@ namespace gaden
         return paths;
     }
 
-    bool EnvironmentConfigMetadata::CreateTemplate()
+    bool EnvironmentConfigMetadata::CreateTemplate(std::filesystem::path const& directory)
     {
         try
         {
-            GADEN_INFO("Creating environment configuration  at'{}'", rootDirectory);
+            GADEN_INFO("Creating environment configuration  at'{}'", directory);
             // create the root-level stuff
-            std::filesystem::create_directories(rootDirectory / "simulations");
-            std::filesystem::create_directories(rootDirectory / "playbacks");
-            std::ofstream configFile(rootDirectory / "config.yaml");
-            configFile <<
-                R"(
-# CAD models of the enviroment (.stl)
-models: 
-  - "!color [0.92, 0.96, 0.96]"
-  - "path to the model. Can be relative to this file"
-  - "path to the model. Can be relative to this file"
-
-# CAD model of the outlets (.stl)
-outlets_models: 
-  - "!color [0.96, 0.17, 0.3]"
-  - "path to the model. Can be relative to this file"
-  - "path to the model. Can be relative to this file"
-
-cell_size: 0.1
-
-# 3D Location of a point in free-space
-empty_point_x: 0.0      ### (m)
-empty_point_y: 0.0      ### (m)
-empty_point_z: 0.0      ### (m)
-
-# Wind Data (the node will append _i.csv to the name that is specified here)
-uniformWind: false
-unprocessed_wind_files: "" #path, relative to this file.  _i.csv automatically appended)";
-            configFile.close();
+            std::filesystem::create_directories(directory / "simulations" / "sim1");
+            std::filesystem::create_directories(directory / "scenes");
+            EnvironmentConfigMetadata configMetadata(directory);
+            configMetadata.WriteConfigYAML(directory);
 
             // create a sample simulation config
-            std::filesystem::create_directories(rootDirectory / "simulations" / "sim1");
-            std::ofstream simFile(rootDirectory / "simulations" / "sim1" / "sim.yaml");
-            simFile <<
-                R"(
-gasType: 0
-sourcePosition: [0.0, 0.0, 0.0]
+            std::filesystem::path simFile = configMetadata.GetSimulationFilePath("sim1");
+            RunningSimulation::Parameters sim1{.source = std::make_shared<PointSource>()};
+            sim1.WriteToYAML(simFile);
 
-deltaTime: 0.1                    
-numFilaments_sec: 10   
-windIterationDeltaTime: 1.0          
-
-temperature: 298.0                 
-pressure: 1.0                
-filament_ppm_center: 10.0         
-filament_initial_std: 10.0         
-filament_growth_gamma: 15.0        
-filament_noise_std: 0.02           
-
-saveResults: true
-saveDeltaTime: 0.5
-
-# Wind Loop options
-wind_looping:
-  loop: false
-  from: 0
-  to: 24)";
-            simFile.close();
-
-            // create a sample playback file
-            std::ofstream playbackFile(rootDirectory / "playbacks" / "scene1.yaml");
-            playbackFile <<
-                R"(
-initial_iteration: 0
-
-playback_loop:
-  loop: true
-  from: 0
-  to: 100
-
-simulations:
-  - sim: "sim1"
-    gas_color: [0.0, 1.0, 0.0]
-)";
-            playbackFile.close();
+            // create a sample scene file
+            PlaybackSceneMetadata metadata;
+            metadata.params.push_back({.resultsDirectory = simFile.parent_path() / "result"});
+            metadata.WriteToYAML(directory / "scenes" / "scene1.yaml");            
         }
         catch (std::exception const& e)
         {
-            GADEN_ERROR("Failed to create environment configuration template at '{}'", rootDirectory);
+            GADEN_ERROR("Failed to create environment configuration template at '{}'", directory);
             return false;
         }
         return true;

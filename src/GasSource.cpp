@@ -82,7 +82,7 @@ namespace gaden
             GADEN_ERROR("Serialization for this source type is not implemented!");
         }
 
-        emitter << YAML::Key << "position" << YAML::Value << source->sourcePosition;
+        emitter << YAML::Key << "position" << YAML::Value << YAML::Flow << source->sourcePosition;
         emitter << YAML::Key << "gasType" << YAML::Value << source->gasType;
 
         emitter << YAML::EndMap;

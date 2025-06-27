@@ -16,7 +16,7 @@ namespace gaden
         std::filesystem::path envPath = directory / "OccupancyGrid3D.csv";
         if (config.environment.ReadFromFile(envPath) == ReadResult::NO_FILE)
         {
-            GADEN_WARN("Could not read environment file '{}'", envPath.c_str());
+            GADEN_INFO("Could not read environment file '{}'. Preprocessing is needed.", envPath.c_str());
             return std::nullopt;
         }
 

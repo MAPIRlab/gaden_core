@@ -84,9 +84,11 @@ namespace gaden
 
     inline void WriteLoopYAML(YAML::Emitter& emitter, LoopConfig const& config)
     {
+        emitter << YAML::BeginMap;
         emitter << YAML::Key << "loop" << YAML::Value << config.loop;
         emitter << YAML::Key << "from" << YAML::Value << config.from;
         emitter << YAML::Key << "to" << YAML::Value << config.to;
+        emitter << YAML::EndMap;
     }
 
     inline void EncodeModelsList(YAML::Emitter& emitter,

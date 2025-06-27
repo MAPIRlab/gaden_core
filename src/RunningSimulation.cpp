@@ -294,7 +294,7 @@ namespace gaden
         {
             YAML::Emitter emitter;
             emitter << YAML::BeginMap;
-            emitter << YAML::Flow << YAML::Key << "source" << YAML::Value;
+            emitter << YAML::Key << "source" << YAML::Value;
             GasSource::WriteYAML(emitter, source);
 
             // clang-format off
@@ -313,9 +313,7 @@ namespace gaden
             // clang-format on
 
             emitter << YAML::Key << "windLooping";
-            emitter << YAML::BeginMap;
             WriteLoopYAML(emitter, windLoop);
-            emitter << YAML::EndMap;
 
             std::ofstream file(path);
             file << emitter.c_str();

@@ -246,6 +246,9 @@ namespace gaden
             Vector3i indices = environment.coordsToIndices(emptyPoint);
 
             q.emplace(indices);
+
+            if (environment.at(indices) != Environment::CellState::Uninitialized)
+                GADEN_ERROR("'Empty point' provided is corresponds to space that had been directly occupied by the mesh! This is almost certainly a mistake!");
             environment.atRef(indices) = Environment::CellState::Free;
         }
 

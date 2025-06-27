@@ -103,9 +103,7 @@ namespace gaden
         FromYAML<std::string> ( yaml, "unprocessed_wind_files", wind_files);
         unprocessedWindFiles = paths::MakeAbsolutePath(wind_files, yamlPath.parent_path());
         
-        FromYAML<float> ( yaml, "empty_point_x", emptyPoint.x);
-        FromYAML<float> ( yaml, "empty_point_y", emptyPoint.y);
-        FromYAML<float> ( yaml, "empty_point_z", emptyPoint.z);
+        FromYAML<Vector3> ( yaml, "empty_point", emptyPoint);
         
         FromYAML<float> ( yaml, "cell_size",     cellSize);
         FromYAML<bool>  ( yaml, "uniformWind",   uniformWind);
@@ -131,9 +129,7 @@ namespace gaden
                                                                                                           projectRoot,          //
                                                                                                           GetConfigFilePath().parent_path())
                                                                                .c_str();
-        emitter << YAML::Key << "empty_point_x" << YAML::Value << emptyPoint.x;
-        emitter << YAML::Key << "empty_point_y" << YAML::Value << emptyPoint.y;
-        emitter << YAML::Key << "empty_point_z" << YAML::Value << emptyPoint.z;
+        emitter << YAML::Key << "empty_point" << YAML::Value << YAML::Flow << emptyPoint;
 
         emitter << YAML::Key << "cell_size" << YAML::Value << cellSize;
         emitter << YAML::Key << "uniformWind" << YAML::Value << uniformWind;

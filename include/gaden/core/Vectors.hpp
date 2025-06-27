@@ -24,6 +24,12 @@ namespace gaden
         }
 
         template <typename Vec>
+        inline float sqrlength(const Vec& vec)
+        {
+            return dot(vec, vec);
+        }
+
+        template <typename Vec>
         inline Vec normalized(const Vec& vec)
         {
             return glm::normalize(vec);
@@ -45,6 +51,16 @@ namespace gaden
         inline Vec ceil(const Vec& a)
         {
             return glm::ceil(a);
+        }
+
+        template <typename Vec>
+        inline Vec lerp(const Vec& a, const Vec& b, float t)
+        {
+            Vec v;
+            for (size_t i = 0; i < v.length(); i++)
+                v[i] = std::lerp(a[i], b[i], t);
+
+            return v;
         }
 
         template <typename Vec>

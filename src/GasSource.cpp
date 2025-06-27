@@ -44,9 +44,6 @@ namespace gaden
             // common
             source->sourcePosition = node["position"].as<Vector3>();
             source->gasType = node["gasType"].as<GasType>();
-            source->initialSigma = node["initialSigma"].as<float>();
-            source->ppmCenter = node["ppmCenter"].as<float>();
-            source->numFilaments_sec = node["numFilaments_sec"].as<float>();
 
             return source;
         }
@@ -85,14 +82,85 @@ namespace gaden
             GADEN_ERROR("Serialization for this source type is not implemented!");
         }
 
-        emitter << YAML::Comment("common");
         emitter << YAML::Key << "position" << YAML::Value << source->sourcePosition;
         emitter << YAML::Key << "gasType" << YAML::Value << source->gasType;
-        emitter << YAML::Key << "initialSigma" << YAML::Value << source->initialSigma;
-        emitter << YAML::Key << "ppmCenter" << YAML::Value << source->ppmCenter;
-        emitter << YAML::Key << "numFilaments_sec" << YAML::Value << source->numFilaments_sec;
 
         emitter << YAML::EndMap;
     }
 
+
+    // we cant do simple serialization with memcpy because of the dynamic types
+    // we *could*, in theory memcpy from the first field of the object (having already cast to the concrete type) to avoid the vpointer
+    // but that layout is technically a compiler-dependent thing, so... we'll just serialize each field independently
+
+    void GasSource::SerializeBinary(BufferWriter& writer, std::shared_ptr<GasSource> source)
+    {
+        std::string sourceType = source->Type();
+        writer.Write(&sourceType);
+
+        if (sourceType == "point")
+        {
+        }
+        else if (sourceType == "box")
+        {
+            writer.Write(&As<BoxSource>(source)->size);
+        }
+        else if (sourceType == "line")
+        {
+            writer.Write(&As<LineSource>(source)->lineEnd);
+        }
+        else if (sourceType == "sphere")
+        {
+            float r = As<SphereSource>(source)->GetRadius();
+            writer.Write(&r);
+        }
+        else
+        {
+            GADEN_ERROR("Invalid source type '{}'. Cannot serialize it", sourceType);
+            GADEN_TERMINATE;
+        }
+
+        writer.Write(&source->sourcePosition);
+        writer.Write(&source->gasType);
+    }
+
+    void GasSource::DeserializeBinary(BufferReader& reader, std::shared_ptr<GasSource>& source)
+    {
+        std::string sourceType;
+        reader.Read(&sourceType);
+
+        if (sourceType == "point")
+        {
+            if (!Is<PointSource>(source))
+                source = std::make_shared<PointSource>();
+        }
+        else if (sourceType == "box")
+        {
+            if (!Is<BoxSource>(source))
+                source = std::make_shared<BoxSource>();
+            reader.Read(&As<BoxSource>(source)->size);
+        }
+        else if (sourceType == "line")
+        {
+            if (!Is<LineSource>(source))
+                source = std::make_shared<LineSource>();
+            reader.Read(&As<LineSource>(source)->lineEnd);
+        }
+        else if (sourceType == "sphere")
+        {
+            if (!Is<SphereSource>(source))
+                source = std::make_shared<SphereSource>();
+            float r;
+            reader.Read(&r);
+            As<SphereSource>(source)->SetRadius(r);
+        }
+        else
+        {
+            GADEN_ERROR("Invalid source type '{}'. Failed deserialization", sourceType);
+            GADEN_TERMINATE;
+        }
+
+        reader.Read(&source->sourcePosition);
+        reader.Read(&source->gasType);
+    }
 } // namespace gaden

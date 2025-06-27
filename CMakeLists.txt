@@ -25,6 +25,7 @@ add_library(gaden SHARED
     src/EnvironmentConfigMetadata.cpp
     src/RunningSimulation.cpp
     src/Simulation.cpp
+    src/GasSource.cpp
     src/WindSequence.cpp
 )
 

@@ -23,6 +23,7 @@ namespace gaden
         void LoadLogfile(BufferReader reader);
         void LoadLogfileVersion1(BufferReader reader);
         void LoadLogfileVersionPre2_6(BufferReader reader);
+        void LoadLogfileVersion2_6(BufferReader reader);
 
     private:
         Parameters parameters;
@@ -33,6 +34,5 @@ namespace gaden
 
         std::vector<uint8_t> compressedBuffer;
         std::vector<uint8_t> rawBuffer;
-
     };
 } // namespace gaden

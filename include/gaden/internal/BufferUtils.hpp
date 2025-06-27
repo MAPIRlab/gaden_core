@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <string.h>
 
 namespace gaden
@@ -21,6 +22,14 @@ namespace gaden
         void Write(T* address)
         {
             Write(address, sizeof(T));
+        }
+
+        template <>
+        void Write<std::string>(std::string* address)
+        {
+            size_t size = address->length();
+            Write(&size);
+            Write(address->data(), size);
         }
 
         template <typename T>
@@ -63,6 +72,15 @@ namespace gaden
         {
             memcpy(address, current, size);
             current += size;
+        }
+
+        template <>
+        void Read<std::string>(std::string* address)
+        {
+            size_t size;
+            Read(&size);
+            address->resize(size);
+            Read(address->data(), size);
         }
 
         size_t currentOffset()

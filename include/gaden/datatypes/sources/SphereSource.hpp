@@ -7,7 +7,7 @@ namespace gaden
     class SphereSource : public GasSource
     {
     public:
-        virtual Filament Emit() const override
+        virtual Vector3 Emit() const override
         {
             // rejection sampling
             // looks funky, but it is generally faster than generating the points in spherical coordinates and converting to cartesian
@@ -18,7 +18,7 @@ namespace gaden
                                uniformRandom(-radius, radius));
                 float sqrDistance = vmath::sqrlength(offset);
                 if (sqrDistance <= squareRadius)
-                    return Filament(sourcePosition + offset, initialSigma);
+                    return sourcePosition + offset;
             }
         }
         const char* Type() const override {return "sphere";} 

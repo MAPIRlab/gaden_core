@@ -7,10 +7,9 @@ namespace gaden
     class PointSource : public GasSource
     {
     public:
-        virtual Filament Emit() const override
+        virtual Vector3 Emit() const override
         {
-            Filament filament(sourcePosition, initialSigma);
-            return filament;
+            return sourcePosition;
         }  
         const char* Type() const override {return "point";} 
 

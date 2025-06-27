@@ -71,7 +71,7 @@ namespace gaden
         std::map<GasType, float> gases;
         for (const auto& sim : simulations)
         {
-            GasType type = sim->simulationMetadata.gasType;
+            GasType type = sim->simulationMetadata.source->gasType;
             float concentration = 0;
             if (gases.contains(type))
                 concentration = gases.at(type);
@@ -85,7 +85,7 @@ namespace gaden
     {
         std::vector<GasType> types;
         for (auto& sim : simulations)
-            types.push_back(sim->simulationMetadata.gasType);
+            types.push_back(sim->simulationMetadata.source->gasType);
         return types;
     }
 

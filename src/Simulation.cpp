@@ -39,11 +39,11 @@ namespace gaden
         float distance_cm = 100 * vmath::length(filament.position - samplePoint);
 
         constexpr float pi_cubed = M_PI * M_PI * M_PI;
-        float numMolesTarget_cm3 = (simulationMetadata.totalMolesInFilament / //
+        float numMolesTarget_cm3 = (simulationMetadata.constants.totalMolesInFilament / //
                                     (sqrt(8 * pi_cubed) * sigma * sigma * sigma)) *
                                    exp(-(distance_cm * distance_cm) / (2 * sigma * sigma));
 
-        float ppm = numMolesTarget_cm3 / simulationMetadata.numMolesAllGasesIncm3 * 1e6; // parts of target gas per million
+        float ppm = numMolesTarget_cm3 / simulationMetadata.constants.numMolesAllGasesIncm3 * 1e6; // parts of target gas per million
 
         return ppm;
     }

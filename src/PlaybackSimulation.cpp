@@ -1,3 +1,4 @@
+#include "gaden/datatypes/sources/PointSource.hpp"
 #include "gaden/internal/BufferUtils.hpp"
 #include <fstream>
 #include <gaden/PlaybackSimulation.hpp>
@@ -62,7 +63,7 @@ namespace gaden
             if (config.environment.versionMinor <= 5)
                 LoadLogfileVersionPre2_6(reader);
             else
-                LoadLogfile(reader);
+                LoadLogfileVersion2_6(reader);
         }
         else
         {
@@ -83,7 +84,8 @@ namespace gaden
     void PlaybackSimulation::LoadLogfile(BufferReader reader)
     {
         reader.Read(&config.environment.description);
-        reader.Read(&simulationMetadata);
+        GasSource::DeserializeBinary(reader, simulationMetadata.source);
+        reader.Read(&simulationMetadata.constants);
 
         int windIndex;
         reader.Read(&windIndex, sizeof(int));
@@ -142,14 +144,17 @@ namespace gaden
 
         reader.Read(&bufferDoubles, 3 * sizeof(double)); // ground truth source position, we can ignore it
 
+        if (!simulationMetadata.source)
+            simulationMetadata.source = std::make_shared<PointSource>();
+
         int gas_type_index;
         reader.Read(&gas_type_index, sizeof(int));
-        simulationMetadata.gasType = static_cast<GasType>(gas_type_index);
+        simulationMetadata.source->gasType = static_cast<GasType>(gas_type_index);
 
         reader.Read(bufferDoubles, sizeof(double));
-        simulationMetadata.totalMolesInFilament = bufferDoubles[0];
+        simulationMetadata.constants.totalMolesInFilament = bufferDoubles[0];
         reader.Read(bufferDoubles, sizeof(double));
-        simulationMetadata.numMolesAllGasesIncm3 = bufferDoubles[0];
+        simulationMetadata.constants.numMolesAllGasesIncm3 = bufferDoubles[0];
 
         int windIndex;
         reader.Read(&windIndex, sizeof(int));
@@ -176,15 +181,18 @@ namespace gaden
         gaden::Vector3 source_position;
         reader.Read(&source_position, sizeof(gaden::Vector3));
 
+        if (!simulationMetadata.source)
+            simulationMetadata.source = std::make_shared<PointSource>();
+
         int gas_type_index;
         reader.Read(&gas_type_index, sizeof(int));
-        simulationMetadata.gasType = static_cast<GasType>(gas_type_index);
+        simulationMetadata.source->gasType = static_cast<GasType>(gas_type_index);
 
         double aux;
         reader.Read(&aux, sizeof(double));
-        simulationMetadata.totalMolesInFilament = aux;
+        simulationMetadata.constants.totalMolesInFilament = aux;
         reader.Read(&aux, sizeof(double));
-        simulationMetadata.numMolesAllGasesIncm3 = aux;
+        simulationMetadata.constants.numMolesAllGasesIncm3 = aux;
 
         int windIndex;
         reader.Read(&windIndex, sizeof(int));
@@ -200,6 +208,33 @@ namespace gaden
             reader.Read(&y, sizeof(double));
             reader.Read(&z, sizeof(double));
             reader.Read(&stdDev, sizeof(double));
+
+            activeFilaments.emplace_back(x, y, z, stdDev);
+        }
+    }
+
+    void PlaybackSimulation::LoadLogfileVersion2_6(BufferReader reader)
+    {
+        reader.Read(&config.environment.description);
+
+        if (!simulationMetadata.source)
+            simulationMetadata.source = std::make_shared<PointSource>();
+        reader.Read(&simulationMetadata.constants);
+
+        int windIndex;
+        reader.Read(&windIndex, sizeof(int));
+        config.windSequence.SetCurrentIndex(windIndex);
+
+        activeFilaments.clear();
+        int filament_index;
+        float x, y, z, stdDev;
+        while (!reader.Ended())
+        {
+            reader.Read(&filament_index, sizeof(int));
+            reader.Read(&x, sizeof(float));
+            reader.Read(&y, sizeof(float));
+            reader.Read(&z, sizeof(float));
+            reader.Read(&stdDev, sizeof(float));
 
             activeFilaments.emplace_back(x, y, z, stdDev);
         }

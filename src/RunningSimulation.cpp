@@ -21,22 +21,21 @@ namespace gaden
         // noise used to not consider deltaTime (bad), now it does (good)
         // however, that means that old configuration files will now behave differently (bad)
         // so, to keep things more or less the same (good), we will scale the noise std by the most commonly used delta time -- 1/10th of a second
-        parameters.filament_noise_std *= 10;
+        parameters.filamentNoise_std *= 10;
 
         filaments1.reserve(params.expectedNumIterations * params.numFilaments_sec / params.deltaTime);
         filaments2.reserve(params.expectedNumIterations * params.numFilaments_sec / params.deltaTime);
         activeFilaments = &filaments1;
         auxFilamentsVector = &filaments2;
 
-        simulationMetadata.gasType = params.gasType;
-        simulationMetadata.sourcePosition = params.sourcePosition;
+        simulationMetadata.source = params.source;
 
         // calculate the filament->concentration constants
         //-------------------------------------------------
-        simulationMetadata.numMolesAllGasesIncm3 = params.pressure / (R * params.temperature);
+        simulationMetadata.constants.numMolesAllGasesIncm3 = params.pressure / (R * params.temperature);
 
-        float filament_moles_cm3_center = params.filament_ppm_center / 1e6 * simulationMetadata.numMolesAllGasesIncm3;                          //[moles of target gas / cm³]
-        simulationMetadata.totalMolesInFilament = filament_moles_cm3_center * (sqrt(8 * pow(M_PI, 3)) * pow(params.filament_initial_sigma, 3)); // total number of moles in a filament
+        float filament_moles_cm3_center = params.filamentPPMcenter / 1e6 * simulationMetadata.constants.numMolesAllGasesIncm3;                          //[moles of target gas / cm³]
+        simulationMetadata.constants.totalMolesInFilament = filament_moles_cm3_center * (sqrt(8 * pow(M_PI, 3)) * pow(params.filamentInitialSigma, 3)); // total number of moles in a filament
 
         rawBuffer.resize(maxBufferSize);
         compressedBuffer.resize(maxBufferSize);
@@ -94,14 +93,13 @@ namespace gaden
             Vector3 position;
             do
             {
-                Vector3 randomOffset = config.environment.description.cellSize * Vector3{uniformRandom(-1, 1), uniformRandom(-1, 1), uniformRandom(-1, 1)};
-                position = parameters.sourcePosition + randomOffset;
+                position = simulationMetadata.source->Emit();
                 attempts++;
             } while (!config.environment.IsInBounds(position) && attempts < safetyLimit);
 
             GADEN_VERIFY(attempts < safetyLimit, "Could not spawn filaments around source position! Is it inside the environment bounds?");
 
-            activeFilaments->emplace_back(position, parameters.filament_initial_sigma);
+            activeFilaments->emplace_back(position, parameters.filamentInitialSigma);
         }
 
         releaseAccumulator = releaseAccumulator - std::floor(releaseAccumulator);
@@ -130,7 +128,7 @@ namespace gaden
         // Estimte filament acceleration due to gravity & Bouyant force (for the given gas_type):
         constexpr float g = 9.8;
         constexpr float specific_gravity_air = 1; //[dimensionless]
-        size_t gasIndex = static_cast<size_t>(parameters.gasType);
+        size_t gasIndex = static_cast<size_t>(simulationMetadata.source->gasType);
 
         try
         {
@@ -140,7 +138,7 @@ namespace gaden
             // 1. Simulate Advection (Va)
             //    Large scale wind-eddies -> Movement of a filament as a whole by wind
             //------------------------------------------------------------------------
-            gaden::Vector3 windVec =  SampleWind(cellIdx);
+            gaden::Vector3 windVec = SampleWind(cellIdx);
             Vector3 newPosition = filament.position + windVec * parameters.deltaTime;
 
             // 2. Simulate Gravity & Bouyant Force
@@ -153,15 +151,15 @@ namespace gaden
             // Approximation from "Terminal Velocity of a Bubble Rise in a Liquid Column", World Academy of Science, Engineering and Technology 28 2007
             constexpr float ro_air = 1.205; //[kg/m³] density of air
             constexpr float mu = 19 * 1e-6; //[kg/s·m] dynamic viscosity of air
-            float terminal_buoyancy_velocity = (g * (1 - SpecificGravity[gasIndex]) * ro_air * parameters.filament_ppm_center * 1e-6) / (18 * mu);
+            float terminal_buoyancy_velocity = (g * (1 - SpecificGravity[gasIndex]) * ro_air * parameters.filamentPPMcenter * 1e-6) / (18 * mu);
             // newpos_z += terminal_buoyancy_velocity*parameters.deltaTime;
 
             // 3. Add some variability (stochastic process)
             //------------------------------------
 
-            newPosition.x += gaussian.nextValue(0, parameters.filament_noise_std) * parameters.deltaTime;
-            newPosition.y += gaussian.nextValue(0, parameters.filament_noise_std) * parameters.deltaTime;
-            newPosition.z += gaussian.nextValue(0, parameters.filament_noise_std) * parameters.deltaTime;
+            newPosition.x += gaussian.nextValue(0, parameters.filamentNoise_std) * parameters.deltaTime;
+            newPosition.y += gaussian.nextValue(0, parameters.filamentNoise_std) * parameters.deltaTime;
+            newPosition.z += gaussian.nextValue(0, parameters.filamentNoise_std) * parameters.deltaTime;
 
             // 4. Check filament location
             //------------------------------------
@@ -174,7 +172,7 @@ namespace gaden
             //    Vd (small scale wind eddies) -> Difussion or change of the filament shape (growth with time)
             //    R = sigma of a 3D gaussian -> Increasing sigma with time
             //------------------------------------------------------------------------
-            filament.sigma += parameters.filament_growth_gamma / (2 * filament.sigma) * parameters.deltaTime;
+            filament.sigma += parameters.filamentGrowthGamma / (2 * filament.sigma) * parameters.deltaTime;
         }
         catch (std::exception& e)
         {
@@ -230,7 +228,9 @@ namespace gaden
 
         writer.Write(&config.environment.description);
 
-        writer.Write(&simulationMetadata);
+        
+        GasSource::SerializeBinary(writer, simulationMetadata.source);
+        writer.Write(&simulationMetadata.constants);
 
         int windIndex = config.windSequence.GetCurrentIndex();
         writer.Write(&windIndex); // index of the wind file (they are stored separately under (results_location)/wind/... )
@@ -261,17 +261,18 @@ namespace gaden
 
             saveDataDirectory = path.parent_path() / "result";
 
+            GADEN_VERIFY(yaml["source"], "YAML parameters must include a 'source' object!");
+            source = GasSource::ParseYAML(yaml["source"]);
+
             // clang-format off
-            FromYAML<GasType>   (yaml, "gasType",                   gasType);
-            FromYAML<Vector3>   (yaml, "sourcePosition",            sourcePosition);
             FromYAML<float>     (yaml, "deltaTime",                 deltaTime);
             FromYAML<float>     (yaml, "windIterationDeltaTime",    windIterationDeltaTime);
             FromYAML<float>     (yaml, "temperature",               temperature);
             FromYAML<float>     (yaml, "pressure",                  pressure);
-            FromYAML<float>     (yaml, "filament_ppm_center",       filament_ppm_center);
-            FromYAML<float>     (yaml, "filament_initial_sigma",    filament_initial_sigma);
-            FromYAML<float>     (yaml, "filament_growth_gamma",     filament_growth_gamma);
-            FromYAML<float>     (yaml, "filament_noise_std",        filament_noise_std);
+            FromYAML<float>     (yaml, "filamentPPMcenter",         filamentPPMcenter);
+            FromYAML<float>     (yaml, "filamentInitialSigma",      filamentInitialSigma);
+            FromYAML<float>     (yaml, "filamentGrowthGamma",       filamentGrowthGamma);
+            FromYAML<float>     (yaml, "filamentNoise_std",         filamentNoise_std);
             FromYAML<float>     (yaml, "numFilaments_sec",          numFilaments_sec);
             FromYAML<size_t>    (yaml, "expectedNumIterations",     expectedNumIterations);
             FromYAML<bool>      (yaml, "saveResults",               saveResults);
@@ -293,22 +294,25 @@ namespace gaden
         {
             YAML::Emitter emitter;
             emitter << YAML::BeginMap;
-            emitter << YAML::Flow << YAML::Key << "gasType" << YAML::Value << gasType;
-            emitter << YAML::Key << "sourcePosition" << YAML::Value << sourcePosition;
-            emitter << YAML::Key << "deltaTime" << YAML::Value << deltaTime;
-            emitter << YAML::Key << "windIterationDeltaTime" << YAML::Value << windIterationDeltaTime;
-            emitter << YAML::Key << "temperature" << YAML::Value << temperature;
-            emitter << YAML::Key << "pressure" << YAML::Value << pressure;
-            emitter << YAML::Key << "filament_ppm_center" << YAML::Value << filament_ppm_center;
-            emitter << YAML::Key << "filament_initial_sigma" << YAML::Value << filament_initial_sigma;
-            emitter << YAML::Key << "filament_growth_gamma" << YAML::Value << filament_growth_gamma;
-            emitter << YAML::Key << "filament_noise_std" << YAML::Value << filament_noise_std;
-            emitter << YAML::Key << "numFilaments_sec" << YAML::Value << numFilaments_sec;
-            emitter << YAML::Key << "expectedNumIterations" << YAML::Value << expectedNumIterations;
-            emitter << YAML::Key << "saveResults" << YAML::Value << saveResults;
-            emitter << YAML::Key << "saveDeltaTime" << YAML::Value << saveDeltaTime;
+            emitter << YAML::Flow << YAML::Key << "source" << YAML::Value;
+            GasSource::WriteYAML(emitter, source);
 
-            emitter << YAML::Key << "wind_looping";
+            // clang-format off
+            emitter << YAML::Key << "deltaTime"                 << YAML::Value << deltaTime;
+            emitter << YAML::Key << "windIterationDeltaTime"    << YAML::Value << windIterationDeltaTime;
+            emitter << YAML::Key << "temperature"               << YAML::Value << temperature;
+            emitter << YAML::Key << "pressure"                  << YAML::Value << pressure;
+            emitter << YAML::Key << "filamentPPMcenter"         << YAML::Value << filamentPPMcenter;
+            emitter << YAML::Key << "filamentInitialSigma"      << YAML::Value << filamentInitialSigma;
+            emitter << YAML::Key << "filamentGrowthGamma"       << YAML::Value << filamentGrowthGamma;
+            emitter << YAML::Key << "filamentNoise_std"         << YAML::Value << filamentNoise_std;
+            emitter << YAML::Key << "numFilaments_sec"          << YAML::Value << numFilaments_sec;
+            emitter << YAML::Key << "expectedNumIterations"     << YAML::Value << expectedNumIterations;
+            emitter << YAML::Key << "saveResults"               << YAML::Value << saveResults;
+            emitter << YAML::Key << "saveDeltaTime"             << YAML::Value << saveDeltaTime;
+            // clang-format on
+
+            emitter << YAML::Key << "windLooping";
             emitter << YAML::BeginMap;
             WriteLoopYAML(emitter, windLoop);
             emitter << YAML::EndMap;

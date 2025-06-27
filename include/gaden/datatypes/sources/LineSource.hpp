@@ -8,10 +8,10 @@ namespace gaden
     class LineSource : public GasSource
     {
     public:
-        virtual Filament Emit() const override
+        Vector3 Emit() const override
         {
             float t = uniformRandom(0, 1);
-            return Filament(vmath::lerp(sourcePosition, lineEnd, t), initialSigma);
+            return vmath::lerp(sourcePosition, lineEnd, t);
         }
         const char* Type() const override {return "line";} 
 

@@ -32,7 +32,7 @@ namespace gaden
         float cellSize = 0.1f;
         gaden::Vector3 emptyPoint = {0, 0, 0};
         bool uniformWind = false;
-        std::string unprocessedWindFiles; // the path, as appears in the configuration file (without the _i.csv suffix)
+        std::string unprocessedWindFiles = ""; // the path, as appears in the configuration file (without the _i.csv suffix)
 
         std::map<std::string, SimulationParams> simulations;
         std::map<std::string, PlaybackSceneMetadata> scenes;

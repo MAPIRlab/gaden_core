@@ -102,7 +102,8 @@ namespace gaden
         
         std::string wind_files;
         FromYAML<std::string> ( yaml, "unprocessed_wind_files", wind_files);
-        unprocessedWindFiles = paths::MakeAbsolutePath(wind_files, yamlPath.parent_path());
+        if(unprocessedWindFiles != "")
+            unprocessedWindFiles = paths::MakeAbsolutePath(wind_files, yamlPath.parent_path());
         
         FromYAML<Vector3> ( yaml, "empty_point", emptyPoint);
         
@@ -176,7 +177,7 @@ namespace gaden
             // create a sample scene file
             PlaybackSceneMetadata metadata;
             metadata.params.push_back({.resultsDirectory = simFile.parent_path() / "result"});
-            metadata.WriteToYAML(directory / "scenes" / "scene1.yaml");            
+            metadata.WriteToYAML(directory / "scenes" / "scene1.yaml");
         }
         catch (std::exception const& e)
         {

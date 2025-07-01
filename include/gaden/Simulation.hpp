@@ -13,7 +13,7 @@ namespace gaden
         Simulation(const EnvironmentConfiguration& configuration)
             : config(configuration)
         {}
-        
+
         virtual void AdvanceTimestep() = 0;
         float SampleConcentration(const Vector3& point) const;
 
@@ -24,6 +24,7 @@ namespace gaden
 
     protected:
         bool CheckLineOfSight(Vector3 start, Vector3 end) const;
+        float CalculateConcentration(const Vector3& point) const;
         float CalculateConcentrationSingleFilament(const Filament& filament, const Vector3& samplePoint) const;
 
         float ConcentrationAtCenter(Filament const& filament) const;
@@ -33,5 +34,8 @@ namespace gaden
         SimulationMetadata simulationMetadata;
 
         Color gasDisplayColor = {0.4, 0.4, 0.4, 1};
+
+    protected:
+        std::optional<std::vector<float>> concentrations; // only valid if params.preCalculateConcentrations
     };
 } // namespace gaden

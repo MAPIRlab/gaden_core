@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <string.h>
+#include <vector>
 
 namespace gaden
 {
@@ -30,6 +31,14 @@ namespace gaden
             size_t size = address->length();
             Write(&size);
             Write(address->data(), size);
+        }
+
+        template <typename T>
+        void Write(std::vector<T>* address)
+        {
+            size_t size = address->size();
+            Write(&size);
+            Write(address->data(), size * sizeof(T));
         }
 
         template <typename T>
@@ -81,6 +90,15 @@ namespace gaden
             Read(&size);
             address->resize(size);
             Read(address->data(), size);
+        }
+
+        template <typename T>
+        void Read(std::vector<T>* address)
+        {
+            size_t size;
+            Read(&size);
+            address->resize(size);
+            Read(address->data(), size * sizeof(T));
         }
 
         size_t currentOffset()

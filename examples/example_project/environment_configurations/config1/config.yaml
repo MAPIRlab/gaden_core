@@ -6,8 +6,6 @@ outlets_models:
   - ../../cad_models/10x6_door_left.stl
   - ../../cad_models/10x6_door_right.stl
 unprocessed_wind_files: ../../wind_simulations/05ms/wind_at_cell_centers
-empty_point_x: 1.5
-empty_point_y: 1.7
-empty_point_z: 0
+empty_point: [1.05, 1.1, 0]
 cell_size: 0.1
 uniformWind: false

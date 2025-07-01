@@ -91,18 +91,30 @@ namespace gaden
         reader.Read(&windIndex, sizeof(int));
         config.windSequence.SetCurrentIndex(windIndex);
 
-        activeFilaments.clear();
-        int filament_index;
-        float x, y, z, stdDev;
-        while (!reader.Ended())
-        {
-            reader.Read(&filament_index, sizeof(int));
-            reader.Read(&x, sizeof(float));
-            reader.Read(&y, sizeof(float));
-            reader.Read(&z, sizeof(float));
-            reader.Read(&stdDev, sizeof(float));
+        std::string modeStr;
+        reader.Read(&modeStr);
 
-            activeFilaments.emplace_back(x, y, z, stdDev);
+        if (modeStr == "filaments")
+        {
+            mode = Mode::Filaments;
+            activeFilaments.clear();
+            reader.Read(&activeFilaments);
+        }
+        else if (modeStr == "concentrations")
+        {
+            mode = Mode::Concentration;
+            if (!concentrations)
+            {
+                GADEN_INFO("Simulation was generated with pre-calculated concentrations");
+                concentrations.emplace();
+                concentrations->resize(config.environment.numCells(), 0.0);
+            }
+            reader.Read(&(*concentrations));
+        }
+        else
+        {
+            GADEN_SERIOUS_ERROR("File mode not recognized: '{}'. Something might have gone wrong with the binary serialization.");
+            GADEN_TERMINATE;
         }
     }
 
@@ -114,6 +126,7 @@ namespace gaden
 {
     void PlaybackSimulation::LoadLogfileVersion1(BufferReader reader)
     {
+        mode = Mode::Filaments;
         static bool warned = false;
         if (!warned)
         {
@@ -177,6 +190,7 @@ namespace gaden
 
     void PlaybackSimulation::LoadLogfileVersionPre2_6(BufferReader reader)
     {
+        mode = Mode::Filaments;
         reader.Read(&config.environment.description, sizeof(config.environment.description));
         gaden::Vector3 source_position;
         reader.Read(&source_position, sizeof(gaden::Vector3));
@@ -215,6 +229,7 @@ namespace gaden
 
     void PlaybackSimulation::LoadLogfileVersion2_6(BufferReader reader)
     {
+        mode = Mode::Filaments;
         reader.Read(&config.environment.description);
 
         if (!simulationMetadata.source)

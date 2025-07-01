@@ -35,7 +35,7 @@ namespace gaden
         //-------------------------------------------------
         simulationMetadata.constants.numMolesAllGasesIncm3 = params.pressure / (R * params.temperature);
 
-        float filament_moles_cm3_center = params.filamentPPMcenter_initial / 1e6 * simulationMetadata.constants.numMolesAllGasesIncm3;                          //[moles of target gas / cm³]
+        float filament_moles_cm3_center = params.filamentPPMcenter_initial / 1e6 * simulationMetadata.constants.numMolesAllGasesIncm3;                  //[moles of target gas / cm³]
         simulationMetadata.constants.totalMolesInFilament = filament_moles_cm3_center * (sqrt(8 * pow(M_PI, 3)) * pow(params.filamentInitialSigma, 3)); // total number of moles in a filament
 
         rawBuffer.resize(maxBufferSize);
@@ -44,13 +44,30 @@ namespace gaden
 
         paths::TryCreateDirectory(parameters.saveDataDirectory);
         if (parameters.saveResults)
+        {
             GADEN_INFO("Saving results in directory '{}'", parameters.saveDataDirectory);
+            std::filesystem::remove_all(parameters.saveDataDirectory); // clear any pre-existing results to avoid mixing two different simulations
+            if(!std::filesystem::create_directory(parameters.saveDataDirectory))
+                GADEN_ERROR("Could not create directory '{}'", parameters.saveDataDirectory);
+        }
+
+        if (parameters.preCalculateConcentrations)
+        {
+            concentrations.emplace();
+            concentrations->resize(envConfig.environment.numCells(), 0.0);
+            GADEN_SERIOUS_WARN("\n--------\n"
+                               "Using 'preCalculateConcentrations'! This will make the simulation very slow. If you don't actively need this behaviour, it is strongly recommended to turn it off.\n"
+                               "--------");
+        }
     }
 
     void RunningSimulation::AdvanceTimestep()
     {
         AddFilaments();
         MoveFilaments();
+
+        if (parameters.preCalculateConcentrations)
+            UpdateConcentrations();
 
         if (parameters.saveResults && currentTime > lastSaveTime + parameters.saveDeltaTime)
         {
@@ -213,6 +230,15 @@ namespace gaden
         return Environment::CellState::Free;
     }
 
+    void RunningSimulation::UpdateConcentrations()
+    {
+#pragma parallel for
+        for (size_t i = 0; i < concentrations->size(); i++)
+        {
+            (*concentrations)[i] += CalculateConcentration(config.environment.coordsOfCellCenter(config.environment.indicesFrom1D(i)));
+        }
+    }
+
     void RunningSimulation::SaveResults()
     {
         // check we can create the file
@@ -235,11 +261,17 @@ namespace gaden
         int windIndex = config.windSequence.GetCurrentIndex();
         writer.Write(&windIndex); // index of the wind file (they are stored separately under (results_location)/wind/... )
 
-        for (int i = 0; i < activeFilaments->size(); i++)
+        if (!parameters.preCalculateConcentrations)
         {
-            writer.Write(&i);
-            writer.Write(&activeFilaments->at(i).position);
-            writer.Write(&activeFilaments->at(i).sigma);
+            std::string mode("filaments");
+            writer.Write(&mode);
+            writer.Write(activeFilaments);
+        }
+        else
+        {
+            std::string mode("concentrations");
+            writer.Write(&mode);
+            writer.Write(&(*concentrations));
         }
 
         // compression with zlib
@@ -282,6 +314,7 @@ namespace gaden
             FromYAML<size_t>    (yaml, "expectedNumIterations",     expectedNumIterations);
             FromYAML<bool>      (yaml, "saveResults",               saveResults);
             FromYAML<float>     (yaml, "saveDeltaTime",             saveDeltaTime);
+            FromYAML<bool>      (yaml, "preCalculateConcentrations",preCalculateConcentrations);
             // clang-format on
 
             if (YAML::Node wind_yaml = yaml["wind_looping"])
@@ -315,6 +348,7 @@ namespace gaden
             emitter << YAML::Key << "expectedNumIterations"     << YAML::Value << expectedNumIterations;
             emitter << YAML::Key << "saveResults"               << YAML::Value << saveResults;
             emitter << YAML::Key << "saveDeltaTime"             << YAML::Value << saveDeltaTime;
+            emitter << YAML::Key << "preCalculateConcentrations"<< YAML::Value << preCalculateConcentrations;
             // clang-format on
 
             emitter << YAML::Key << "windLooping";

@@ -6,6 +6,7 @@ namespace gaden
 {
     struct Filament
     {
+        Filament() {}
         Filament(float x, float y, float z, float sigma_filament)
             : position(x, y, z), sigma(sigma_filament)
         {}

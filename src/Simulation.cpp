@@ -32,6 +32,23 @@ namespace gaden
         return true;
     }
 
+    float Simulation::CalculateConcentration(const Vector3& samplePoint) const
+    {
+        float gas_conc = 0;
+        const auto& activeFilaments = GetFilaments();
+        for (auto it = activeFilaments.begin(); it != activeFilaments.end(); it++)
+        {
+            const Filament& fil = *it;
+            float distance = vmath::length(fil.position - samplePoint);
+
+            float limitDistance = fil.sigma * 5.f / 100.f; // arbitrary cutoff point at 5 sigma
+            if (distance < limitDistance && CheckLineOfSight(samplePoint, fil.position))
+                gas_conc += CalculateConcentrationSingleFilament(fil, samplePoint);
+        }
+
+        return gas_conc;
+    }
+
     float Simulation::CalculateConcentrationSingleFilament(const Filament& filament, const Vector3& samplePoint) const
     {
         // calculate how much gas concentration does one filament contribute to the queried location
@@ -61,19 +78,10 @@ namespace gaden
             return 0;
         }
 
-        float gas_conc = 0;
-        const auto& activeFilaments = GetFilaments();
-        for (auto it = activeFilaments.begin(); it != activeFilaments.end(); it++)
-        {
-            const Filament& fil = *it;
-            float distance = vmath::length(fil.position - samplePoint);
-
-            float limitDistance = fil.sigma * 5.f / 100.f; // arbitrary cutoff point at 5 sigma
-            if (distance < limitDistance && CheckLineOfSight(samplePoint, fil.position))
-                gas_conc += CalculateConcentrationSingleFilament(fil, samplePoint);
-        }
-
-        return gas_conc;
+        if (concentrations)
+            return concentrations->at(config.environment.indexFrom3D(config.environment.coordsToIndices(samplePoint)));
+        else
+            return CalculateConcentration(samplePoint);
     }
 
     Vector3 Simulation::SampleWind(const Vector3i& indices) const

@@ -12,22 +12,24 @@ namespace gaden
         {
             std::shared_ptr<GasSource> source = std::make_shared<PointSource>();
 
-            float deltaTime = 0.1;               // seconds
-            float windIterationDeltaTime = 1.0;  // seconds
-            float temperature = 298.f;           // K
-            float pressure = 1.f;                // Atm
-            float filamentPPMcenter_initial = 20;      //[ppm] Gas concentration at the center of the 3D gaussian (filament)
-            float filamentInitialSigma = 10.0; //[cm] Sigma of the filament at t=0-> 3DGaussian shape
-            float filamentGrowthGamma = 10.0;  //[cm²/s] Growth ratio of the filament_std
-            float filamentNoise_std = 0.01;     // STD to add some "variablity" to the filament location
-            float numFilaments_sec = 10;         // How many filaments to release per second
-            size_t expectedNumIterations = 600;  // To give initial size to filament vector. If you run the simulator longer than this, there will be a reallocation -- so, bad for performance :_(
+            float deltaTime = 0.1;                // seconds
+            float windIterationDeltaTime = 1.0;   // seconds
+            float temperature = 298.f;            // K
+            float pressure = 1.f;                 // Atm
+            float filamentPPMcenter_initial = 20; //[ppm] Gas concentration at the center of the 3D gaussian (filament)
+            float filamentInitialSigma = 10.0;    //[cm] Sigma of the filament at t=0-> 3DGaussian shape
+            float filamentGrowthGamma = 10.0;     //[cm²/s] Growth ratio of the filament_std
+            float filamentNoise_std = 0.01;       // STD to add some "variablity" to the filament location
+            float numFilaments_sec = 10;          // How many filaments to release per second
+            size_t expectedNumIterations = 600;   // To give initial size to filament vector. If you run the simulator longer than this, there will be a reallocation -- so, bad for performance :_(
 
             LoopConfig windLoop;
 
             // you can query the simulation as it runs, or store the state of the gas dispersion to disk and play it back later
             bool saveResults = false;
             float saveDeltaTime = 0.5;
+            bool preCalculateConcentrations = false; // produce full concentration maps instead of serializing the filament positions. NOT RECOMMENDED!
+                                                     // it is *way* slower and produces *much* larger files, but could be useful for some applications
             std::filesystem::path saveDataDirectory;
 
             void ReadFromYAML(std::filesystem::path const& path);
@@ -53,8 +55,10 @@ namespace gaden
         void MoveFilaments();
         void MoveSingleFilament(Filament& filament);
         Environment::CellState StepTowards(Filament& filament, Vector3 end);
-
         void SaveResults();
+
+        // Only used in preCalculateConcentrations mode
+        void UpdateConcentrations();
 
     private:
         Parameters parameters;

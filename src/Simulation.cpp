@@ -38,14 +38,19 @@ namespace gaden
         float sigma = filament.sigma;
         float distance_cm = 100 * vmath::length(filament.position - samplePoint);
 
-        constexpr float pi_cubed = M_PI * M_PI * M_PI;
-        float numMolesTarget_cm3 = (simulationMetadata.constants.totalMolesInFilament / //
-                                    (sqrt(8 * pi_cubed) * sigma * sigma * sigma)) *
-                                   exp(-(distance_cm * distance_cm) / (2 * sigma * sigma));
-
-        float ppm = numMolesTarget_cm3 / simulationMetadata.constants.numMolesAllGasesIncm3 * 1e6; // parts of target gas per million
-
+        float ppm = ConcentrationAtCenter(filament) *
+                    exp(-(distance_cm * distance_cm) / (2 * sigma * sigma));
         return ppm;
+    }
+
+    float Simulation::ConcentrationAtCenter(Filament const& filament) const
+    {
+        constexpr float pi_cubed = M_PI * M_PI * M_PI;
+
+        float numMolesTarget_cm3 = simulationMetadata.constants.totalMolesInFilament //
+                                   / (sqrt(8 * pi_cubed) * filament.sigma * filament.sigma * filament.sigma);
+
+        return 1e6 * numMolesTarget_cm3 / simulationMetadata.constants.numMolesAllGasesIncm3; // express in ppm
     }
 
     float Simulation::SampleConcentration(const Vector3& samplePoint) const

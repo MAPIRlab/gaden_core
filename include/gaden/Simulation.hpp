@@ -26,6 +26,8 @@ namespace gaden
         bool CheckLineOfSight(Vector3 start, Vector3 end) const;
         float CalculateConcentrationSingleFilament(const Filament& filament, const Vector3& samplePoint) const;
 
+        float ConcentrationAtCenter(Filament const& filament) const;
+
     public:
         EnvironmentConfiguration config;
         SimulationMetadata simulationMetadata;

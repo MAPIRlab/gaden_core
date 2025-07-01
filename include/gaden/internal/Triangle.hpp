@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gaden/core/Assertions.hpp"
 #include "gaden/core/Logging.hpp"
 #include "gaden/core/Vectors.hpp"
 namespace gaden
@@ -22,17 +23,13 @@ namespace gaden
 
         Vector3& operator[](int i)
         {
+            GADEN_VERIFY(i<3, "Indexing error when accessing the gaden::Vector3s in triangle! Index must be >= 2");
             if (i == 0)
                 return p1;
             else if (i == 1)
                 return p2;
-            else if (i == 2)
-                return p3;
             else
-            {
-                GADEN_ERROR("Indexing error when accessing the gaden::Vector3s in triangle! Index must be >= 2");
-                return p1;
-            }
+                return p3;
         }
 
         Vector3 normal() const

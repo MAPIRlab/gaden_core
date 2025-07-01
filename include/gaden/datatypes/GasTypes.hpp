@@ -5,7 +5,7 @@
 namespace gaden
 {
     constexpr float R = 82.057338; // R is the ideal, or universal, gas constant, equal to the product of the Boltzmann constant and the Avogadro constant [cm³·atm/mol·K] Gas Constant
-    
+
     // clang-format off
 
     // we need to keep the backing type as int to avoid breaking the binary serialization
@@ -33,7 +33,7 @@ namespace gaden
     // SpecificGravity(Air) = 1 (as reference)
     // Specific gravity is the ratio of the density of a substance to the density of a reference substance; equivalently,
     // it is the ratio of the mass of a substance to the mass of a reference substance for the same given volume.
-    constexpr float SpecificGravity[14] = {
+    constexpr std::array<float, 14> SpecificGravity = {
         1.0378, // ethanol   (heavier than air)
         0.5537, // methane   (lighter than air)
         0.0696, // hydrogen  (lighter than air)

@@ -29,12 +29,13 @@ namespace gaden
         auxFilamentsVector = &filaments2;
 
         simulationMetadata.source = params.source;
+        GADEN_VERIFY(simulationMetadata.source->gasType != GasType::unknown, "Gas type is set to 'unknown'! Have you initialized the parameters?");
 
         // calculate the filament->concentration constants
         //-------------------------------------------------
         simulationMetadata.constants.numMolesAllGasesIncm3 = params.pressure / (R * params.temperature);
 
-        float filament_moles_cm3_center = params.filamentPPMcenter / 1e6 * simulationMetadata.constants.numMolesAllGasesIncm3;                          //[moles of target gas / cm³]
+        float filament_moles_cm3_center = params.filamentPPMcenter_initial / 1e6 * simulationMetadata.constants.numMolesAllGasesIncm3;                          //[moles of target gas / cm³]
         simulationMetadata.constants.totalMolesInFilament = filament_moles_cm3_center * (sqrt(8 * pow(M_PI, 3)) * pow(params.filamentInitialSigma, 3)); // total number of moles in a filament
 
         rawBuffer.resize(maxBufferSize);
@@ -151,8 +152,8 @@ namespace gaden
             // Approximation from "Terminal Velocity of a Bubble Rise in a Liquid Column", World Academy of Science, Engineering and Technology 28 2007
             constexpr float ro_air = 1.205; //[kg/m³] density of air
             constexpr float mu = 19 * 1e-6; //[kg/s·m] dynamic viscosity of air
-            float terminal_buoyancy_velocity = (g * (1 - SpecificGravity[gasIndex]) * ro_air * parameters.filamentPPMcenter * 1e-6) / (18 * mu);
-            // newpos_z += terminal_buoyancy_velocity*parameters.deltaTime;
+            float terminal_buoyancy_velocity = (g * (1 - SpecificGravity.at(gasIndex)) * ro_air * ConcentrationAtCenter(filament) * 1e-6) / (18 * mu);
+            newPosition.z += terminal_buoyancy_velocity * parameters.deltaTime;
 
             // 3. Add some variability (stochastic process)
             //------------------------------------
@@ -228,7 +229,6 @@ namespace gaden
 
         writer.Write(&config.environment.description);
 
-        
         GasSource::SerializeBinary(writer, simulationMetadata.source);
         writer.Write(&simulationMetadata.constants);
 
@@ -261,15 +261,20 @@ namespace gaden
 
             saveDataDirectory = path.parent_path() / "result";
 
-            GADEN_VERIFY(yaml["source"], "YAML parameters must include a 'source' object!");
-            source = GasSource::ParseYAML(yaml["source"]);
+            if (!yaml["source"])
+            {
+                source = std::make_shared<PointSource>();
+                GADEN_ERROR("Yaml does not include a source object! Creating a default point source at (0,0,0)");
+            }
+            else
+                source = GasSource::ParseYAML(yaml["source"]);
 
             // clang-format off
             FromYAML<float>     (yaml, "deltaTime",                 deltaTime);
             FromYAML<float>     (yaml, "windIterationDeltaTime",    windIterationDeltaTime);
             FromYAML<float>     (yaml, "temperature",               temperature);
             FromYAML<float>     (yaml, "pressure",                  pressure);
-            FromYAML<float>     (yaml, "filamentPPMcenter",         filamentPPMcenter);
+            FromYAML<float>     (yaml, "filamentPPMcenter",         filamentPPMcenter_initial);
             FromYAML<float>     (yaml, "filamentInitialSigma",      filamentInitialSigma);
             FromYAML<float>     (yaml, "filamentGrowthGamma",       filamentGrowthGamma);
             FromYAML<float>     (yaml, "filamentNoise_std",         filamentNoise_std);
@@ -302,7 +307,7 @@ namespace gaden
             emitter << YAML::Key << "windIterationDeltaTime"    << YAML::Value << windIterationDeltaTime;
             emitter << YAML::Key << "temperature"               << YAML::Value << temperature;
             emitter << YAML::Key << "pressure"                  << YAML::Value << pressure;
-            emitter << YAML::Key << "filamentPPMcenter"         << YAML::Value << filamentPPMcenter;
+            emitter << YAML::Key << "filamentPPMcenter"         << YAML::Value << filamentPPMcenter_initial;
             emitter << YAML::Key << "filamentInitialSigma"      << YAML::Value << filamentInitialSigma;
             emitter << YAML::Key << "filamentGrowthGamma"       << YAML::Value << filamentGrowthGamma;
             emitter << YAML::Key << "filamentNoise_std"         << YAML::Value << filamentNoise_std;

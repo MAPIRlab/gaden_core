@@ -63,7 +63,28 @@ namespace gaden
 
     void RunningSceneMetadata::ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot)
     {
-        // TODO
+        YAML::Node yaml = YAML::LoadFile(path);
+
+        size_t startIteration = yaml["playback_initial_iteration"].as<size_t>();
+        LoopConfig loop = ParseLoopYAML(yaml["playback_loop"]);
+        YAML::Node simulations = yaml["simulations"];
+
+        params.resize(simulations.size());
+        gasDisplayColors.resize(simulations.size());
+        for (size_t i = 0; i < simulations.size(); i++)
+        {
+            std::string filePath = projectRoot / "simulations" / simulations[i]["sim"].as<std::string>() / "sim.yaml";
+            params.at(i).ReadFromYAML(filePath);
+
+            Vector3 color_vec{0.4, 0.4, 0.4}; // default
+            if (YAML::Node node = simulations[i]["gas_color"])
+                color_vec = node.as<Vector3>();
+
+            gasDisplayColors.at(i).r = color_vec[0];
+            gasDisplayColors.at(i).g = color_vec[1];
+            gasDisplayColors.at(i).b = color_vec[2];
+            gasDisplayColors.at(i).a = 1;
+        }
     }
 
     Scene::Scene(PlaybackSceneMetadata const& metadata, EnvironmentConfiguration const& env)

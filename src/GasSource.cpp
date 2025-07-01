@@ -1,5 +1,6 @@
 #include "YAML_Conversions.hpp"
 #include "gaden/datatypes/sources/BoxSource.hpp"
+#include "gaden/datatypes/sources/CylinderSource.hpp"
 #include "gaden/datatypes/sources/LineSource.hpp"
 #include "gaden/datatypes/sources/PointSource.hpp"
 #include "gaden/datatypes/sources/SphereSource.hpp"
@@ -33,7 +34,13 @@ namespace gaden
             else if (sourceType == "sphere")
             {
                 source = std::make_shared<SphereSource>();
-                As<SphereSource>(source)->SetRadius(node["radius"].as<float>());
+                As<SphereSource>(source)->radius = node["radius"].as<float>();
+            }
+            else if (sourceType == "cylinder")
+            {
+                source = std::make_shared<CylinderSource>();
+                As<CylinderSource>(source)->radius = node["radius"].as<float>();
+                As<CylinderSource>(source)->height = node["height"].as<float>();
             }
             else
             {
@@ -75,7 +82,13 @@ namespace gaden
         else if (Is<SphereSource>(source))
         {
             emitter << YAML::Key << "sourceType" << YAML::Value << "sphere";
-            emitter << YAML::Key << "radius" << YAML::Value << As<SphereSource>(source)->GetRadius();
+            emitter << YAML::Key << "radius" << YAML::Value << As<SphereSource>(source)->radius;
+        }
+        else if (Is<CylinderSource>(source))
+        {
+            emitter << YAML::Key << "sourceType" << YAML::Value << "cylinder";
+            emitter << YAML::Key << "radius" << YAML::Value << As<CylinderSource>(source)->radius;
+            emitter << YAML::Key << "height" << YAML::Value << As<CylinderSource>(source)->height;
         }
         else
         {
@@ -87,7 +100,6 @@ namespace gaden
 
         emitter << YAML::EndMap;
     }
-
 
     // we cant do simple serialization with memcpy because of the dynamic types
     // we *could*, in theory memcpy from the first field of the object (having already cast to the concrete type) to avoid the vpointer
@@ -111,8 +123,12 @@ namespace gaden
         }
         else if (sourceType == "sphere")
         {
-            float r = As<SphereSource>(source)->GetRadius();
-            writer.Write(&r);
+            writer.Write(&As<SphereSource>(source)->radius);
+        }
+        else if (sourceType == "cylinder")
+        {
+            writer.Write(&As<CylinderSource>(source)->radius);
+            writer.Write(&As<CylinderSource>(source)->height);
         }
         else
         {
@@ -150,9 +166,14 @@ namespace gaden
         {
             if (!Is<SphereSource>(source))
                 source = std::make_shared<SphereSource>();
-            float r;
-            reader.Read(&r);
-            As<SphereSource>(source)->SetRadius(r);
+            reader.Read(&As<SphereSource>(source)->radius);
+        }
+        else if (sourceType == "cylinder")
+        {
+            if (!Is<CylinderSource>(source))
+                source = std::make_shared<CylinderSource>();
+            reader.Read(&As<CylinderSource>(source)->radius);
+            reader.Read(&As<CylinderSource>(source)->height);
         }
         else
         {

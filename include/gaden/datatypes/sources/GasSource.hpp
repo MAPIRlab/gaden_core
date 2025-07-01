@@ -16,13 +16,21 @@ namespace gaden
     class GasSource
     {
     public:
-        virtual Vector3 Emit() const = 0;
-        virtual const char* Type() const = 0;
-
         static std::shared_ptr<GasSource> ParseYAML(YAML::Node const& node);
         static void WriteYAML(YAML::Emitter& emitter, std::shared_ptr<GasSource> source);
         static void SerializeBinary(BufferWriter& writer, std::shared_ptr<GasSource> source);
         static void DeserializeBinary(BufferReader& reader, std::shared_ptr<GasSource>& source);
+
+        static inline const std::array sourceTypeNames = std::to_array<std::string>(
+            {"point",
+             "sphere",
+             "box",
+             "line",
+             "cylinder"});
+
+    public:
+        virtual Vector3 Emit() const = 0;
+        virtual const char* Type() const = 0;
 
         Vector3 sourcePosition;
         GasType gasType = GasType::unknown; // Gas type to simulate

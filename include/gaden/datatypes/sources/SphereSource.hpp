@@ -17,22 +17,12 @@ namespace gaden
                                uniformRandom(-radius, radius),
                                uniformRandom(-radius, radius));
                 float sqrDistance = vmath::sqrlength(offset);
-                if (sqrDistance <= squareRadius)
+                if (sqrDistance <= radius * radius)
                     return sourcePosition + offset;
             }
         }
         const char* Type() const override {return "sphere";} 
 
-        void SetRadius(float r)
-        {
-            radius = r;
-            squareRadius = r * r;
-        }
-
-        float GetRadius() { return radius; }
-
-    private:
-        float radius;
-        float squareRadius;
+        float radius = 1;
     };
 } // namespace gaden

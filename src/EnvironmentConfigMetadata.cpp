@@ -102,7 +102,7 @@ namespace gaden
         
         std::string wind_files;
         FromYAML<std::string> ( yaml, "unprocessed_wind_files", wind_files);
-        if(unprocessedWindFiles != "")
+        if(wind_files != "")
             unprocessedWindFiles = paths::MakeAbsolutePath(wind_files, yamlPath.parent_path());
         
         FromYAML<Vector3> ( yaml, "empty_point", emptyPoint);

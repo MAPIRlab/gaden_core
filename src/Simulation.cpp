@@ -39,10 +39,10 @@ namespace gaden
         for (auto it = activeFilaments.begin(); it != activeFilaments.end(); it++)
         {
             const Filament& fil = *it;
-            float distance = vmath::length(fil.position - samplePoint);
+            float distanceSqr = vmath::sqrlength(fil.position - samplePoint);
 
-            float limitDistance = fil.sigma * 5.f / 100.f; // arbitrary cutoff point at 5 sigma
-            if (distance < limitDistance && CheckLineOfSight(samplePoint, fil.position))
+            float limitDistance = fil.sigma * 3 / 100.f; // arbitrary cutoff point at 3 sigma
+            if (distanceSqr < limitDistance * limitDistance && CheckLineOfSight(samplePoint, fil.position))
                 gas_conc += CalculateConcentrationSingleFilament(fil, samplePoint);
         }
 

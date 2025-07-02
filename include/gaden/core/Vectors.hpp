@@ -2,6 +2,10 @@
 #define GLM_FORCE_INLINE
 #define GLM_FORCE_XYZW_ONLY
 #define GLM_ENABLE_EXPERIMENTAL
+
+// #define GLM_EXT_INCLUDED
+// #define GLM_FORCE_MESSAGES
+
 #include <glm/common.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtx/rotate_vector.hpp>
@@ -26,7 +30,10 @@ namespace gaden
         template <typename Vec>
         inline float sqrlength(const Vec& vec)
         {
-            return dot(vec, vec);
+            float v = 0;
+            for (size_t i = 0; i < vec.length(); i++)
+                v += vec[i] * vec[i];
+            return v;
         }
 
         template <typename Vec>
@@ -72,6 +79,11 @@ namespace gaden
         inline Vector2 transpose(const Vector2& vec)
         {
             return {vec.y, vec.x};
+        }
+
+        inline Vector3 project(Vector3 a, Vector3 b)
+        {
+            return glm::dot(a, b) * glm::normalize(b);
         }
 
         inline Vector3 WithZ(const Vector2& vec, float z)

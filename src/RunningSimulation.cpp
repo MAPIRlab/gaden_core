@@ -47,7 +47,7 @@ namespace gaden
         {
             GADEN_INFO("Saving results in directory '{}'", parameters.saveDataDirectory);
             std::filesystem::remove_all(parameters.saveDataDirectory); // clear any pre-existing results to avoid mixing two different simulations
-            if(!std::filesystem::create_directory(parameters.saveDataDirectory))
+            if (!std::filesystem::create_directory(parameters.saveDataDirectory))
                 GADEN_ERROR("Could not create directory '{}'", parameters.saveDataDirectory);
         }
 
@@ -202,6 +202,15 @@ namespace gaden
     // move the filament as much as possible towards the desired final position, stopping if we find an obstacle along the way
     Environment::CellState RunningSimulation::StepTowards(Filament& filament, Vector3 end)
     {
+        Vector3i startCell = config.environment.coordsToIndices(filament.position);
+        Vector3i endCell = config.environment.coordsToIndices(end);
+
+        if (startCell == endCell)
+        {
+            filament.position = end;
+            return config.environment.at(startCell);
+        }
+
         // Calculate displacement vector
         Vector3 movementDir = end - filament.position;
         float distance = vmath::length(movementDir);
@@ -219,11 +228,21 @@ namespace gaden
 
             // Check if the cell is occupied
             Environment::CellState cellState = config.environment.at(filament.position);
-            if (cellState != Environment::CellState::Free)
+            if (cellState == Environment::CellState::Obstacle || cellState == Environment::CellState::OutOfBounds)
             {
+                Vector3i previousCell = config.environment.coordsToIndices(previous);
+                Vector3i currentCell = config.environment.coordsToIndices(filament.position);
+                Vector3 normal = previousCell - currentCell;
+
                 filament.position = previous;
-                return cellState;
+
+                Vector3 remaining = end-filament.position;
+                Vector3 rejected = remaining - vmath::project(remaining, normal);
+
+                return StepTowards(filament, filament.position + rejected);
             }
+            else if(cellState == Environment::CellState::Outlet)
+                return cellState;
         }
 
         // Direct line of sight confirmed!
@@ -235,7 +254,8 @@ namespace gaden
 #pragma parallel for
         for (size_t i = 0; i < concentrations->size(); i++)
         {
-            (*concentrations)[i] += CalculateConcentration(config.environment.coordsOfCellCenter(config.environment.indicesFrom1D(i)));
+            if (config.environment.cells[i] == Environment::CellState::Free)
+                (*concentrations)[i] += CalculateConcentration(config.environment.coordsOfCellCenter(config.environment.indicesFrom1D(i)));
         }
     }
 

@@ -182,6 +182,7 @@ namespace gaden
             // 4. Check filament location
             //------------------------------------
             Environment::CellState destinationState = StepTowards(filament, newPosition);
+            GADEN_ASSERT(config.environment.IsInBounds(filament.position), "Filament is outside environment!");
 
             if (destinationState == Environment::CellState::Outlet)
                 filament.active = false;
@@ -236,12 +237,12 @@ namespace gaden
 
                 filament.position = previous;
 
-                Vector3 remaining = end-filament.position;
+                Vector3 remaining = end - filament.position;
                 Vector3 rejected = remaining - vmath::project(remaining, normal);
 
                 return StepTowards(filament, filament.position + rejected);
             }
-            else if(cellState == Environment::CellState::Outlet)
+            else if (cellState == Environment::CellState::Outlet)
                 return cellState;
         }
 
@@ -253,9 +254,31 @@ namespace gaden
     {
 #pragma parallel for
         for (size_t i = 0; i < concentrations->size(); i++)
+            concentrations->at(i) = 0;
+
+        for (Filament const& filament : *activeFilaments)
         {
-            if (config.environment.cells[i] == Environment::CellState::Free)
-                (*concentrations)[i] += CalculateConcentration(config.environment.coordsOfCellCenter(config.environment.indicesFrom1D(i)));
+            Vector3i bbMin = config.environment.coordsToIndices(filament.position - filament.sigma * 3 / 100.f);
+            Vector3i bbMax = config.environment.coordsToIndices(filament.position + filament.sigma * 3 / 100.f);
+
+            bbMin.x = std::max(bbMin.x, 0);
+            bbMin.y = std::max(bbMin.y, 0);
+            bbMin.z = std::max(bbMin.z, 0);
+
+            bbMax.x = std::min(bbMax.x, config.environment.description.dimensions.x);
+            bbMax.y = std::min(bbMax.y, config.environment.description.dimensions.y);
+            bbMax.z = std::min(bbMax.z, config.environment.description.dimensions.z);
+
+#pragma parallel for collapse(3)
+            for (size_t x = bbMin.x; x < bbMax.x; x++)
+                for (size_t y = bbMin.y; y < bbMax.x; y++)
+                    for (size_t z = bbMin.z; z < bbMax.z; z++)
+                    {
+                        Vector3i indices{x, y, z};
+                        Vector3 samplePoint = config.environment.coordsOfCellCenter(indices);
+                        if (CheckLineOfSight(filament.position, samplePoint))
+                            (*concentrations)[config.environment.indexFrom3D(indices)] += CalculateConcentrationSingleFilament(filament, samplePoint);
+                    }
         }
     }
 

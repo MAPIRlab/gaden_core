@@ -171,7 +171,7 @@ namespace gaden
 
             // create a sample simulation config
             std::filesystem::path simFile = configMetadata.GetSimulationFilePath("sim1");
-            RunningSimulation::Parameters sim1{.source = std::make_shared<PointSource>()};
+            RunningSimulation::Parameters sim1{.source = std::make_shared<PointSource>(), .saveResults = true};
             sim1.WriteToYAML(simFile);
 
             // create a sample scene file

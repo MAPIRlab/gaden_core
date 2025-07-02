@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS_DEBUG "-glldb -O0")
 
 # generate a python module with bindings to access the library from your python scripts
-set(GENERATE_PYTHON_BINDINGS ON) # requires cppyy. See the readme!
+set(GENERATE_PYTHON_BINDINGS OFF) # requires cppyy. See the readme!
 
 find_package(OpenMP)
 find_package(fmt)

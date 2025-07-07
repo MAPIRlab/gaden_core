@@ -1,9 +1,9 @@
 #include "gaden/RunningSimulation.hpp"
 #include "YAML_Conversions.hpp"
 #include "gaden/datatypes/GasTypes.hpp"
-#include "gaden/internal/Serialization.hpp"
 #include "gaden/internal/MathUtils.hpp"
 #include "gaden/internal/PathUtils.hpp"
+#include "gaden/internal/Serialization.hpp"
 #include <fstream>
 #include <gaden/internal/compression.hpp>
 #include <yaml-cpp/yaml.h>
@@ -68,7 +68,8 @@ namespace gaden
 
         if (parameters.saveResults && currentTime > lastSaveTime + parameters.saveDeltaTime)
         {
-            UpdateConcentrations();
+            if (parameters.preCalculateConcentrations)
+                UpdateConcentrations();
             SaveResults();
             lastSaveTime = currentTime;
         }
@@ -252,7 +253,7 @@ namespace gaden
     {
 #pragma parallel for
         for (size_t i = 0; i < concentrations->size(); i++)
-            concentrations->at(i) = 0;
+            (*concentrations)[i] = 0;
 
         for (Filament const& filament : *activeFilaments)
         {
@@ -331,7 +332,7 @@ namespace gaden
 
         // compression with zlib
         size_t compressedBound = zlib::compressBound(writer.currentOffset());
-        if(compressedBuffer.size() < compressedBound)
+        if (compressedBuffer.size() < compressedBound)
         {
             size_t compressedBound = uncompressedSize * 1.5;
             compressedBuffer.resize(compressedBound); // try to avoid having to resize all the time

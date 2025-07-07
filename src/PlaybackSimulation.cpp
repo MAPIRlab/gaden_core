@@ -1,5 +1,5 @@
 #include "gaden/datatypes/sources/PointSource.hpp"
-#include "gaden/internal/BufferUtils.hpp"
+#include "gaden/internal/Serialization.hpp"
 #include <fstream>
 #include <gaden/PlaybackSimulation.hpp>
 #include <gaden/internal/compression.hpp>
@@ -23,8 +23,8 @@ namespace gaden
             }
         }
 
-        compressedBuffer.resize(maxBufferSize);
-        rawBuffer.resize(maxBufferSize);
+        compressedBuffer.resize(serialization::defaultBufferSize);
+        rawBuffer.resize(serialization::defaultBufferSize);
     }
 
     void PlaybackSimulation::AdvanceTimestep()
@@ -37,18 +37,35 @@ namespace gaden
             return;
         }
 
+        // calculate the buffer sizes and resize if needed
+        std::ifstream infile(filename, std::ios_base::binary);
+        size_t uncompressedSize = serialization::SizeRequiredToUncompress(infile);
+        size_t compressedSize = serialization::RemainingFileSize(infile);
+
+        if (compressedBuffer.size() < compressedSize)
+        {
+            size_t newSize = compressedSize * 1.5;
+            compressedBuffer.resize(newSize);
+            GADEN_INFO("Resizing compressedBuffer to {} bytes", newSize);
+        }
+
+        if (rawBuffer.size() < uncompressedSize)
+        {
+            size_t newSize = uncompressedSize * 1.5;
+            rawBuffer.resize(newSize);
+            GADEN_INFO("Resizing rawBuffer to {} bytes", newSize);
+        }
+
         // read the file
-        std::ifstream infile(filename, std::ios_base::binary | std::ios_base::ate);
-        size_t streamSize = infile.tellg();
-        infile.seekg(0, std::ios_base::beg);
-        infile.read((char*)compressedBuffer.data(), streamSize);
+        // the stream position is set to the start of the compressed area (even in modern files with an uncompressed header) by SizeRequiredToUncompress()
+        infile.read((char*)compressedBuffer.data(), compressedSize);
         infile.close();
 
         // decompress the contents
         zlib::uLongf bufferSize = rawBuffer.size();
-        zlib::uncompress(rawBuffer.data(), &bufferSize, compressedBuffer.data(), compressedBuffer.size());
+        zlib::uncompress(rawBuffer.data(), &uncompressedSize, compressedBuffer.data(), compressedBuffer.size());
 
-        BufferReader reader((char*)rawBuffer.data(), bufferSize);
+        serialization::BufferReader reader((char*)rawBuffer.data(), uncompressedSize);
 
         // check the version of gaden used to generate the file
         reader.Read(&config.environment.versionMajor);
@@ -81,7 +98,7 @@ namespace gaden
         return activeFilaments;
     }
 
-    void PlaybackSimulation::LoadLogfile(BufferReader reader)
+    void PlaybackSimulation::LoadLogfile(serialization::BufferReader reader)
     {
         reader.Read(&config.environment.description);
         GasSource::DeserializeBinary(reader, simulationMetadata.source);
@@ -124,7 +141,7 @@ namespace gaden
 //-------------------------------------
 namespace gaden
 {
-    void PlaybackSimulation::LoadLogfileVersion1(BufferReader reader)
+    void PlaybackSimulation::LoadLogfileVersion1(serialization::BufferReader reader)
     {
         mode = Mode::Filaments;
         static bool warned = false;
@@ -188,7 +205,7 @@ namespace gaden
         }
     }
 
-    void PlaybackSimulation::LoadLogfileVersionPre2_6(BufferReader reader)
+    void PlaybackSimulation::LoadLogfileVersionPre2_6(serialization::BufferReader reader)
     {
         mode = Mode::Filaments;
         reader.Read(&config.environment.description, sizeof(config.environment.description));
@@ -227,7 +244,7 @@ namespace gaden
         }
     }
 
-    void PlaybackSimulation::LoadLogfileVersion2_6(BufferReader reader)
+    void PlaybackSimulation::LoadLogfileVersion2_6(serialization::BufferReader reader)
     {
         mode = Mode::Filaments;
         reader.Read(&config.environment.description);

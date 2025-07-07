@@ -1,7 +1,7 @@
 #include "gaden/RunningSimulation.hpp"
 #include "YAML_Conversions.hpp"
 #include "gaden/datatypes/GasTypes.hpp"
-#include "gaden/internal/BufferUtils.hpp"
+#include "gaden/internal/Serialization.hpp"
 #include "gaden/internal/MathUtils.hpp"
 #include "gaden/internal/PathUtils.hpp"
 #include <fstream>
@@ -38,8 +38,8 @@ namespace gaden
         float filament_moles_cm3_center = params.filamentPPMcenter_initial / 1e6 * simulationMetadata.constants.numMolesAllGasesIncm3;                  //[moles of target gas / cm³]
         simulationMetadata.constants.totalMolesInFilament = filament_moles_cm3_center * (sqrt(8 * pow(M_PI, 3)) * pow(params.filamentInitialSigma, 3)); // total number of moles in a filament
 
-        rawBuffer.resize(maxBufferSize);
-        compressedBuffer.resize(maxBufferSize);
+        rawBuffer.resize(serialization::defaultBufferSize);
+        compressedBuffer.resize(serialization::defaultBufferSize);
         localAirflowDisturbances.resize(config.environment.numCells(), Vector3(0, 0, 0));
 
         paths::TryCreateDirectory(parameters.saveDataDirectory);
@@ -66,11 +66,9 @@ namespace gaden
         AddFilaments();
         MoveFilaments();
 
-        if (parameters.preCalculateConcentrations)
-            UpdateConcentrations();
-
         if (parameters.saveResults && currentTime > lastSaveTime + parameters.saveDeltaTime)
         {
+            UpdateConcentrations();
             SaveResults();
             lastSaveTime = currentTime;
         }
@@ -290,8 +288,22 @@ namespace gaden
         // Configure file name for saving the current snapshot
         std::filesystem::path path = fmt::format("{}/iteration_{}", savePath, last_saved_step);
 
+        // calculate the size we need the buffer to have
+        size_t uncompressedSize;
+        if (parameters.preCalculateConcentrations)
+            uncompressedSize = concentrations->size() * sizeof(float) + 1000; // 1000 bytes is plenty for the all the environment information
+        else
+            uncompressedSize = activeFilaments->size() * sizeof(Filament) + 1000;
+
+        if (uncompressedSize > rawBuffer.size())
+        {
+            size_t newSize = uncompressedSize * 1.5;
+            rawBuffer.resize(newSize); // try to avoid having to resize all the time
+            GADEN_INFO("Resizing raw buffer to {} bytes", newSize);
+        }
+
         // write all the data as-is into a buffer, which we will then compress
-        BufferWriter writer((char*)rawBuffer.data(), rawBuffer.size());
+        serialization::BufferWriter writer((char*)rawBuffer.data(), rawBuffer.size());
 
         writer.Write(&gaden::versionMajor);
         writer.Write(&gaden::versionMinor);
@@ -318,11 +330,21 @@ namespace gaden
         }
 
         // compression with zlib
+        size_t compressedBound = zlib::compressBound(writer.currentOffset());
+        if(compressedBuffer.size() < compressedBound)
+        {
+            size_t compressedBound = uncompressedSize * 1.5;
+            compressedBuffer.resize(compressedBound); // try to avoid having to resize all the time
+            GADEN_INFO("Resizing compressed buffer to {} bytes", compressedBound);
+        }
+
         zlib::uLongf destLength = compressedBuffer.size();
         zlib::compress2(compressedBuffer.data(), &destLength, rawBuffer.data(), writer.currentOffset(), Z_DEFAULT_COMPRESSION);
 
         // write to disk
         std::ofstream results_file(path);
+        results_file.write(serialization::resultHeader, sizeof(serialization::resultHeader));
+        results_file.write((char*)&uncompressedSize, sizeof(uncompressedSize));
         results_file.write((char*)compressedBuffer.data(), destLength);
         results_file.close();
         last_saved_step++;

@@ -1,6 +1,6 @@
 #pragma once
 #include "Simulation.hpp"
-#include "gaden/internal/BufferUtils.hpp"
+#include "gaden/internal/Serialization.hpp"
 
 namespace gaden
 {
@@ -23,10 +23,10 @@ namespace gaden
 
 
     private:
-        void LoadLogfile(BufferReader reader);
-        void LoadLogfileVersion1(BufferReader reader);
-        void LoadLogfileVersionPre2_6(BufferReader reader);
-        void LoadLogfileVersion2_6(BufferReader reader);
+        void LoadLogfile(serialization::BufferReader reader);
+        void LoadLogfileVersion1(serialization::BufferReader reader);
+        void LoadLogfileVersionPre2_6(serialization::BufferReader reader);
+        void LoadLogfileVersion2_6(serialization::BufferReader reader);
 
     private:
         Parameters parameters;

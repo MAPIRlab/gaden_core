@@ -1,7 +1,7 @@
 #pragma once
 #include "gaden/core/Vectors.hpp"
 #include "gaden/datatypes/GasTypes.hpp"
-#include "gaden/internal/BufferUtils.hpp"
+#include "gaden/internal/Serialization.hpp"
 
 // we need to do a forward declaration because gaden does not export yaml-cpp as a dependency
 // (to avoid version conflicts on ros nodes that use the yaml-cpp vendor package)
@@ -18,8 +18,8 @@ namespace gaden
     public:
         static std::shared_ptr<GasSource> ParseYAML(YAML::Node const& node);
         static void WriteYAML(YAML::Emitter& emitter, std::shared_ptr<GasSource> source);
-        static void SerializeBinary(BufferWriter& writer, std::shared_ptr<GasSource> source);
-        static void DeserializeBinary(BufferReader& reader, std::shared_ptr<GasSource>& source);
+        static void SerializeBinary(serialization::BufferWriter& writer, std::shared_ptr<GasSource> source);
+        static void DeserializeBinary(serialization::BufferReader& reader, std::shared_ptr<GasSource>& source);
 
         static inline const std::array sourceTypeNames = std::to_array<std::string>(
             {"point",

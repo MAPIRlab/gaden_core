@@ -1,6 +1,6 @@
 #include "gaden/core/Assertions.hpp"
 #include "gaden/core/Logging.hpp"
-#include "gaden/internal/BufferUtils.hpp"
+#include "gaden/internal/Serialization.hpp"
 #include <fstream>
 #include <gaden/internal/compression.hpp>
 #include <iostream>
@@ -18,21 +18,23 @@ int main(int argc, char* argv[])
         std::string input = argv[1];
         std::string output = argv[2];
 
-        // get size
+        // calculate the buffer sizes and resize if needed
         std::ifstream infile(input, std::ios_base::binary | std::ios_base::ate);
-        size_t streamSize = infile.tellg();
-        infile.seekg(0, std::ios_base::beg);
+        size_t uncompressedSize = gaden::serialization::SizeRequiredToUncompress(infile);
+        size_t compressedSize = gaden::serialization::RemainingFileSize(infile);
 
-        // read the compressed data to a buffer
-        std::vector<uint8_t> compressedBuffer(gaden::maxBufferSize);
-        infile.read((char*)compressedBuffer.data(), streamSize);
+        std::vector<uint8_t> rawBuffer(uncompressedSize);
+        std::vector<uint8_t> compressedBuffer(compressedSize);
+
+        // read the file
+        // the stream position is set to the start of the compressed area (even in modern files with an uncompressed header) by SizeRequiredToUncompress()
+        infile.read((char*)compressedBuffer.data(), compressedSize);
         infile.close();
 
         // decompress the contents
-        std::vector<uint8_t> rawBuffer(gaden::maxBufferSize);
         zlib::uLongf bufferSize = rawBuffer.size();
-        zlib::uncompress(rawBuffer.data(), &bufferSize, compressedBuffer.data(), compressedBuffer.size());
-
+        zlib::uncompress(rawBuffer.data(), &uncompressedSize, compressedBuffer.data(), compressedBuffer.size());
+        
         // write out
         std::ofstream outfile(output);
         outfile.write((char*)rawBuffer.data(), bufferSize);

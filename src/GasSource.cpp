@@ -105,7 +105,7 @@ namespace gaden
     // we *could*, in theory memcpy from the first field of the object (having already cast to the concrete type) to avoid the vpointer
     // but that layout is technically a compiler-dependent thing, so... we'll just serialize each field independently
 
-    void GasSource::SerializeBinary(BufferWriter& writer, std::shared_ptr<GasSource> source)
+    void GasSource::SerializeBinary(serialization::BufferWriter& writer, std::shared_ptr<GasSource> source)
     {
         std::string sourceType = source->Type();
         writer.Write(&sourceType);
@@ -140,7 +140,7 @@ namespace gaden
         writer.Write(&source->gasType);
     }
 
-    void GasSource::DeserializeBinary(BufferReader& reader, std::shared_ptr<GasSource>& source)
+    void GasSource::DeserializeBinary(serialization::BufferReader& reader, std::shared_ptr<GasSource>& source)
     {
         std::string sourceType;
         reader.Read(&sourceType);

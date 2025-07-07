@@ -383,7 +383,7 @@ namespace gaden
             FromYAML<bool>      (yaml, "preCalculateConcentrations",preCalculateConcentrations);
             // clang-format on
 
-            if (YAML::Node wind_yaml = yaml["wind_looping"])
+            if (YAML::Node wind_yaml = yaml["windLooping"])
                 windLoop = ParseLoopYAML(wind_yaml);
         }
         catch (std::exception const& e)

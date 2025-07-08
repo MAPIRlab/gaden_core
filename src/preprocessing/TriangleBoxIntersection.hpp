@@ -204,8 +204,36 @@ inline bool triBoxOverlap(const gaden::Vector3& boxcenter, gaden::Triangle& tria
     e1 = v2 - v1;
     e2 = v0 - v2;
 
+    /* Bullet 1: */
+    /*  first test overlap in the {x,y,z}-directions */
+    /*  find min, max of the triangle each direction, and test for overlap in */
+    /*  that direction -- this is equivalent to testing a minimal AABB around */
+    /*  the triangle against the AABB */
+
+    /* test in X-direction */
+    findMinMax(v0.x, v1.x, v2.x, min, max);
+    if (min > boxHalfSize || max < -boxHalfSize)
+        return false;
+
+    /* test in Y-direction */
+    findMinMax(v0.y, v1.y, v2.y, min, max);
+    if (min > boxHalfSize || max < -boxHalfSize)
+        return false;
+
+    /* test in Z-direction */
+    findMinMax(v0.z, v1.z, v2.z, min, max);
+    if (min > boxHalfSize || max < -boxHalfSize)
+        return false;
+
+    /* Bullet 2: */
+    /*  test if the box intersects the plane of the triangle */
+    /*  compute plane equation of triangle: normal*x+d=0 */
+    normal = gaden::vmath::cross(e0, e1);
+    if (!planeBoxOverlap(normal, v0, boxHalfSize))
+        return false;
+
     /* Bullet 3:  */
-    /*  test the 9 tests first (this was faster) */
+    /*  test the 9 tests */
     fex = std::abs(e0.x);
     fey = std::abs(e0.y);
     fez = std::abs(e0.z);
@@ -236,34 +264,6 @@ inline bool triBoxOverlap(const gaden::Vector3& boxcenter, gaden::Triangle& tria
     if (!axisTestY1(e2.z, e2.x, fez, fex, v0, v1, boxHalfSize, rad, min, max, p0, p1))
         return false;
     if (!axisTestZ12(e2.y, e2.x, fey, fex, v1, v2, boxHalfSize, rad, min, max, p1, p2))
-        return false;
-
-    /* Bullet 1: */
-    /*  first test overlap in the {x,y,z}-directions */
-    /*  find min, max of the triangle each direction, and test for overlap in */
-    /*  that direction -- this is equivalent to testing a minimal AABB around */
-    /*  the triangle against the AABB */
-
-    /* test in X-direction */
-    findMinMax(v0.x, v1.x, v2.x, min, max);
-    if (min > boxHalfSize || max < -boxHalfSize)
-        return false;
-
-    /* test in Y-direction */
-    findMinMax(v0.y, v1.y, v2.y, min, max);
-    if (min > boxHalfSize || max < -boxHalfSize)
-        return false;
-
-    /* test in Z-direction */
-    findMinMax(v0.z, v1.z, v2.z, min, max);
-    if (min > boxHalfSize || max < -boxHalfSize)
-        return false;
-
-    /* Bullet 2: */
-    /*  test if the box intersects the plane of the triangle */
-    /*  compute plane equation of triangle: normal*x+d=0 */
-    normal = gaden::vmath::cross(e0, e1);
-    if (!planeBoxOverlap(normal, v0, boxHalfSize))
         return false;
 
     return true; /* box and triangle overlaps */

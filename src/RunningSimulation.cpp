@@ -2,7 +2,6 @@
 #include "YAML_Conversions.hpp"
 #include "gaden/datatypes/GasTypes.hpp"
 #include "gaden/internal/MathUtils.hpp"
-#include "gaden/internal/PathUtils.hpp"
 #include "gaden/internal/Serialization.hpp"
 #include <fstream>
 #include <gaden/internal/compression.hpp>
@@ -42,7 +41,6 @@ namespace gaden
         compressedBuffer.resize(serialization::defaultBufferSize);
         localAirflowDisturbances.resize(config.environment.numCells(), Vector3(0, 0, 0));
 
-        paths::TryCreateDirectory(parameters.saveDataDirectory);
         if (parameters.saveResults)
         {
             GADEN_INFO("Saving results in directory '{}'", parameters.saveDataDirectory);

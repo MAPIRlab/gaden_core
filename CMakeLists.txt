@@ -17,6 +17,7 @@ add_subdirectory(third_party/yaml-cpp)
 
 add_library(gaden SHARED
     src/CoppeliaSim.cpp
+    src/MVSim.cpp
     src/Environment.cpp
     src/EnvironmentConfiguration.cpp
     src/Scene.cpp
@@ -51,3 +52,6 @@ add_subdirectory(utils/decompress)
 if(GENERATE_PYTHON_BINDINGS)
     include(cmake/PythonBindings.cmake)
 endif()
+
+# Compile with coppelia scene generation support
+include(cmake/TryFindCoppelia.cmake)

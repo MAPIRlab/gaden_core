@@ -208,7 +208,7 @@ namespace gaden
         return true;
     }
 
-    bool Environment::Write2DSlicePGM(const std::filesystem::path& path, float floorHeight, bool blockOutlets)
+    bool Environment::Write2DSlicePGM(const std::filesystem::path& path, float floorHeight, bool blockOutlets) const
     {
         try
         {
@@ -244,7 +244,7 @@ namespace gaden
         return true;
     }
 
-    bool Environment::WriteROSOccupancyYAML(const std::filesystem::path& path, float height)
+    bool Environment::WriteROSOccupancyYAML(const std::filesystem::path& path, float height) const
     {
         try
         {
@@ -272,7 +272,7 @@ namespace gaden
         return true;
     }
 
-    bool Environment::printBasicSimYaml(const std::filesystem::path& path, Vector3 startingPoint)
+    bool Environment::printBasicSimYaml(const std::filesystem::path& path, Vector3 startingPoint) const
     {
         try
         {

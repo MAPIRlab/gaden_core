@@ -50,9 +50,9 @@ namespace gaden
         ReadResult ReadFromFile(const std::filesystem::path& filePath);
 
         bool WriteToFile(const std::filesystem::path& path);
-        bool Write2DSlicePGM(const std::filesystem::path& path, float height, bool blockOutlets);
-        bool WriteROSOccupancyYAML(const std::filesystem::path& path, float height);
-        bool printBasicSimYaml(const std::filesystem::path& path, Vector3 startingPoint);
+        bool Write2DSlicePGM(const std::filesystem::path& path, float height, bool blockOutlets) const;
+        bool WriteROSOccupancyYAML(const std::filesystem::path& path, float height) const;
+        bool printBasicSimYaml(const std::filesystem::path& path, Vector3 startingPoint) const;
 
     public:
         int versionMajor = gaden::versionMajor,

@@ -1,6 +1,7 @@
 #include "gaden/RunningSimulation.hpp"
 #include "YAML_Conversions.hpp"
 #include "gaden/datatypes/GasTypes.hpp"
+#include "gaden/internal/GPUAcceleration.hpp"
 #include "gaden/internal/MathUtils.hpp"
 #include "gaden/internal/Serialization.hpp"
 #include <fstream>
@@ -57,6 +58,10 @@ namespace gaden
                                "Using 'preCalculateConcentrations'! This will make the simulation very slow. If you don't actively need this behaviour, it is strongly recommended to turn it off.\n"
                                "--------");
         }
+
+        GPUSetup();
+
+        GPURun();
     }
 
     void RunningSimulation::AdvanceTimestep()

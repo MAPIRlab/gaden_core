@@ -1,9 +1,6 @@
 #pragma once
 
-#include "signal.h"
-#include <fmt/color.h>
-#include <fmt/format.h>
-
+#include "gaden/internal/fmt.hpp"
 #if GADEN_ROS
 #include <rclcpp/logging.hpp>
 #endif

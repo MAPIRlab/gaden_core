@@ -1,5 +1,6 @@
 #pragma once
 #include "Logging.hpp"
+#include "signal.h"
 
 #define GADEN_TERMINATE raise(SIGTRAP)
 

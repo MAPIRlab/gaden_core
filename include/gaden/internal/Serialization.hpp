@@ -29,11 +29,13 @@ namespace gaden
             template <typename T>
             void Write(T* address)
             {
+                static_assert(std::is_trivially_copyable_v<T>,
+                      "Type is not trivially copyable! If your type contains dynamic memory (strings, vectors, etc) you must explicitly define how to serialize it");
+        
                 Write(address, sizeof(T));
             }
 
-            template <>
-            void Write<std::string>(std::string* address)
+            void WriteString(const std::string* address)
             {
                 size_t size = address->length();
                 Write(&size);
@@ -41,15 +43,14 @@ namespace gaden
             }
 
             template <typename T>
-            void Write(std::vector<T>* address)
+            void WriteVector(const std::vector<T>* address)
             {
                 size_t size = address->size();
                 Write(&size);
                 Write(address->data(), size * sizeof(T));
             }
 
-            template <typename T>
-            void Write(T* address, size_t size)
+            void Write(const void* address, size_t size)
             {
                 memcpy(current, address, size);
                 current += size;
@@ -79,19 +80,20 @@ namespace gaden
 
             template <typename T>
             void Read(T* address)
-            {
+            { 
+                static_assert(std::is_trivially_copyable_v<T>,
+                      "Type is not trivially copyable! If your type contains dynamic memory (strings, vectors, etc) you must explicitly define how to serialize it");
+        
                 Read(address, sizeof(T));
             }
 
-            template <typename T>
-            void Read(T* address, size_t size)
+            void Read(void* address, size_t size)
             {
                 memcpy(address, current, size);
                 current += size;
             }
 
-            template <>
-            void Read<std::string>(std::string* address)
+            void ReadString(std::string* address)
             {
                 size_t size;
                 Read(&size);
@@ -100,7 +102,7 @@ namespace gaden
             }
 
             template <typename T>
-            void Read(std::vector<T>* address)
+            void ReadVector(std::vector<T>* address)
             {
                 size_t size;
                 Read(&size);

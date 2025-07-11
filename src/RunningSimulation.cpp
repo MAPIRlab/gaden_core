@@ -318,14 +318,14 @@ namespace gaden
         if (!parameters.preCalculateConcentrations)
         {
             std::string mode("filaments");
-            writer.Write(&mode);
-            writer.Write(activeFilaments);
+            writer.WriteString(&mode);
+            writer.WriteVector(activeFilaments);
         }
         else
         {
             std::string mode("concentrations");
-            writer.Write(&mode);
-            writer.Write(&(*concentrations));
+            writer.WriteString(&mode);
+            writer.WriteVector(&(*concentrations));
         }
 
         // compression with zlib

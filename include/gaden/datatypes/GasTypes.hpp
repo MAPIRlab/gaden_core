@@ -88,6 +88,7 @@ namespace gaden
 
         GADEN_ERROR("Invalid gas type: {}", (int)type);
         GADEN_TERMINATE;
+        return "";
     }
 
 } // namespace gaden

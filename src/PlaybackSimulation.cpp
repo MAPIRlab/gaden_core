@@ -109,13 +109,13 @@ namespace gaden
         config.windSequence.SetCurrentIndex(windIndex);
 
         std::string modeStr;
-        reader.Read(&modeStr);
+        reader.ReadString(&modeStr);
 
         if (modeStr == "filaments")
         {
             mode = Mode::Filaments;
             activeFilaments.clear();
-            reader.Read(&activeFilaments);
+            reader.ReadVector(&activeFilaments);
         }
         else if (modeStr == "concentrations")
         {
@@ -126,7 +126,7 @@ namespace gaden
                 concentrations.emplace();
                 concentrations->resize(config.environment.numCells(), 0.0);
             }
-            reader.Read(&(*concentrations));
+            reader.ReadVector(&(*concentrations));
         }
         else
         {

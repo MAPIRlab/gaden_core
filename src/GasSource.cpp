@@ -108,7 +108,7 @@ namespace gaden
     void GasSource::SerializeBinary(serialization::BufferWriter& writer, std::shared_ptr<GasSource> source)
     {
         std::string sourceType = source->Type();
-        writer.Write(&sourceType);
+        writer.WriteString(&sourceType);
 
         if (sourceType == "point")
         {
@@ -143,7 +143,7 @@ namespace gaden
     void GasSource::DeserializeBinary(serialization::BufferReader& reader, std::shared_ptr<GasSource>& source)
     {
         std::string sourceType;
-        reader.Read(&sourceType);
+        reader.ReadString(&sourceType);
 
         if (sourceType == "point")
         {

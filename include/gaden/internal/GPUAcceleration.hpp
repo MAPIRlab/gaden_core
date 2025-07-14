@@ -1,7 +1,37 @@
 #pragma once
+#include "boost/compute.hpp"
+#include "gaden/Environment.hpp"
+#include "gaden/datatypes/Filament.hpp"
+#include "gaden/datatypes/SimulationMetadata.hpp"
+
+namespace compute = boost::compute;
 
 namespace gaden
 {
-    void GPUSetup();
-    void GPURun();
-}
+
+    struct ComputeConcentrationCommand
+    {
+        Vector3i indices;
+        uint32_t filament;
+    };
+
+    class GPUAcceleration
+    {
+    public:
+        GPUAcceleration();
+        void Setup(class Environment const& env, SimulationMetadata::Constants const& constants);
+        void UpdateConcentrations(std::vector<ComputeConcentrationCommand> const& commandsHost,
+                                               std::vector<float>& concentrationsHost,
+                                               std::vector<Filament> const& filamentsHost);
+
+    private:
+        compute::device gpu = compute::system::default_device();
+        compute::context context;
+        compute::command_queue queue;
+
+        std::optional<compute::kernel> concentrationsKernel;
+
+        compute::vector<Environment::CellState> envData;
+        compute::vector<float> concentrationsGPU;
+    };
+} // namespace gaden

@@ -2,6 +2,7 @@
 #include "Simulation.hpp"
 #include "gaden/EnvironmentConfiguration.hpp"
 #include "gaden/datatypes/sources/PointSource.hpp"
+#include "gaden/internal/GPUAcceleration.hpp"
 
 namespace gaden
 {
@@ -38,6 +39,7 @@ namespace gaden
 
     public:
         RunningSimulation(Parameters params, EnvironmentConfiguration const& envConfig);
+        ~RunningSimulation(); // we need to declare a destructor because of the unique_ptr to incomplete type (GPUAcc)
         void AdvanceTimestep() override;
         const std::vector<Filament>& GetFilaments() const override;
         float GetCurrentTime() { return currentTime; }
@@ -53,7 +55,7 @@ namespace gaden
     private:
         void AddFilaments();
         void MoveFilaments();
-        void MoveSingleFilament(Filament& filament);
+        void MoveSingleFilament(size_t i);
         Environment::CellState StepTowards(Filament& filament, Vector3 end);
         void SaveResults();
 
@@ -71,6 +73,7 @@ namespace gaden
         std::vector<Filament> filaments2;
         std::vector<Filament>* activeFilaments;
         std::vector<Filament>* auxFilamentsVector;
+        std::vector<uint8_t> isActive;
 
         float currentTime = 0.0;
         size_t currentIteration = 0;
@@ -83,5 +86,8 @@ namespace gaden
         size_t last_saved_step = 0;
         std::vector<uint8_t> rawBuffer;
         std::vector<uint8_t> compressedBuffer;
+
+        std::unique_ptr<class GPUAcceleration> gpuAcc;
+        std::vector<ComputeConcentrationCommand> commands;
     };
 } // namespace gaden

@@ -5,6 +5,8 @@
 #include "gaden/internal/MathUtils.hpp"
 #include "gaden/internal/Serialization.hpp"
 #include <fstream>
+#include <gaden/internal/GPUAcceleration.hpp>
+#include <gaden/internal/Profiling.hpp>
 #include <gaden/internal/compression.hpp>
 #include <yaml-cpp/yaml.h>
 
@@ -25,6 +27,7 @@ namespace gaden
 
         filaments1.reserve(params.expectedNumIterations * params.numFilaments_sec / params.deltaTime);
         filaments2.reserve(params.expectedNumIterations * params.numFilaments_sec / params.deltaTime);
+        isActive.reserve(filaments1.capacity());
         activeFilaments = &filaments1;
         auxFilamentsVector = &filaments2;
 
@@ -59,10 +62,11 @@ namespace gaden
                                "--------");
         }
 
-        GPUSetup();
-
-        GPURun();
+        gpuAcc = std::make_unique<GPUAcceleration>();
+        gpuAcc->Setup(config.environment, simulationMetadata.constants);
     }
+    RunningSimulation::~RunningSimulation()
+    {}
 
     void RunningSimulation::AdvanceTimestep()
     {
@@ -101,6 +105,7 @@ namespace gaden
 
     void RunningSimulation::AddFilaments()
     {
+        ZoneScoped;
         float numFilaments_iteration = parameters.numFilaments_sec * parameters.deltaTime;
 
         releaseAccumulator += numFilaments_iteration;
@@ -127,24 +132,29 @@ namespace gaden
 
     void RunningSimulation::MoveFilaments()
     {
+        ZoneScoped;
+        isActive.resize(activeFilaments->size());
+        std::fill(isActive.begin(), isActive.end(), true);
+
 #pragma omp parallel for
         for (size_t i = 0; i < activeFilaments->size(); i++)
-            MoveSingleFilament(activeFilaments->at(i));
+            MoveSingleFilament(i);
 
         // eliminate filaments that exited the environment and swap the vector pointers
         for (size_t i = 0; i < activeFilaments->size(); i++)
         {
-            Filament& filament = activeFilaments->at(i);
-            if (filament.active)
-                auxFilamentsVector->push_back(filament);
+            if (isActive[i])
+                auxFilamentsVector->push_back(activeFilaments->at(i));
         }
 
         activeFilaments->clear();
         std::swap(activeFilaments, auxFilamentsVector);
     }
 
-    void RunningSimulation::MoveSingleFilament(Filament& filament)
+    void RunningSimulation::MoveSingleFilament(size_t i)
     {
+        Filament& filament = activeFilaments->at(i);
+
         // Estimte filament acceleration due to gravity & Bouyant force (for the given gas_type):
         constexpr float g = 9.8;
         constexpr float specific_gravity_air = 1; //[dimensionless]
@@ -187,7 +197,7 @@ namespace gaden
             GADEN_ASSERT(config.environment.IsInBounds(filament.position), "Filament is outside environment!");
 
             if (destinationState == Environment::CellState::Outlet)
-                filament.active = false;
+                isActive[i] = false;
 
             // 4. Filament growth with time (this affects the posterior estimation of gas concentration at each cell)
             //    Vd (small scale wind eddies) -> Difussion or change of the filament shape (growth with time)
@@ -254,12 +264,12 @@ namespace gaden
 
     void RunningSimulation::UpdateConcentrations()
     {
-#pragma parallel for
-        for (size_t i = 0; i < concentrations->size(); i++)
-            (*concentrations)[i] = 0;
+        ZoneScoped;
+        commands.reserve(1e4);
 
-        for (Filament const& filament : *activeFilaments)
+        for (size_t i = 0; i < activeFilaments->size(); i++)
         {
+            Filament const& filament = (*activeFilaments)[i];
             Vector3i bbMin = config.environment.coordsToIndices(filament.position - filament.sigma * 3 / 100.f);
             Vector3i bbMax = config.environment.coordsToIndices(filament.position + filament.sigma * 3 / 100.f);
 
@@ -271,21 +281,22 @@ namespace gaden
             bbMax.y = std::min(bbMax.y, config.environment.description.dimensions.y);
             bbMax.z = std::min(bbMax.z, config.environment.description.dimensions.z);
 
-#pragma parallel for collapse(3)
+            // #pragma parallel for collapse(3)
             for (size_t x = bbMin.x; x < bbMax.x; x++)
                 for (size_t y = bbMin.y; y < bbMax.x; y++)
                     for (size_t z = bbMin.z; z < bbMax.z; z++)
                     {
-                        Vector3i indices{x, y, z};
-                        Vector3 samplePoint = config.environment.coordsOfCellCenter(indices);
-                        if (CheckLineOfSight(filament.position, samplePoint))
-                            (*concentrations)[config.environment.indexFrom3D(indices)] += CalculateConcentrationSingleFilament(filament, samplePoint);
+                        commands.push_back({.indices = {x, y, z}, .filament = static_cast<uint32_t>(i)});
                     }
         }
+
+        gpuAcc->UpdateConcentrations(commands, *concentrations, *activeFilaments);
+        commands.clear();
     }
 
     void RunningSimulation::SaveResults()
     {
+        ZoneScoped;
         // check we can create the file
         std::filesystem::path savePath = parameters.saveDataDirectory;
 
@@ -328,6 +339,7 @@ namespace gaden
         }
         else
         {
+            ZoneScopedN("WriteConcentrations");
             std::string mode("concentrations");
             writer.WriteString(&mode);
             writer.WriteVector(&(*concentrations));
@@ -343,14 +355,21 @@ namespace gaden
         }
 
         zlib::uLongf destLength = compressedBuffer.size();
-        zlib::compress2(compressedBuffer.data(), &destLength, rawBuffer.data(), writer.currentOffset(), Z_DEFAULT_COMPRESSION);
+        {
+            ZoneScopedN("Compress");
+            zlib::compress2(compressedBuffer.data(), &destLength, rawBuffer.data(), writer.currentOffset(), 1);
+        }
 
         // write to disk
-        std::ofstream results_file(path);
-        results_file.write(serialization::resultHeader, sizeof(serialization::resultHeader));
-        results_file.write((char*)&uncompressedSize, sizeof(uncompressedSize));
-        results_file.write((char*)compressedBuffer.data(), destLength);
-        results_file.close();
+        {
+            ZoneScopedN("WriteToDisk");
+
+            std::ofstream results_file(path);
+            results_file.write(serialization::resultHeader, sizeof(serialization::resultHeader));
+            results_file.write((char*)&uncompressedSize, sizeof(uncompressedSize));
+            results_file.write((char*)compressedBuffer.data(), destLength);
+            results_file.close();
+        }
         last_saved_step++;
     }
 

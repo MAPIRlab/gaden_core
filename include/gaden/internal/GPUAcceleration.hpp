@@ -1,8 +1,10 @@
 #pragma once
+#define CL_TARGET_OPENCL_VERSION 300
 #include "boost/compute.hpp"
 #include "gaden/Environment.hpp"
 #include "gaden/datatypes/Filament.hpp"
 #include "gaden/datatypes/SimulationMetadata.hpp"
+#include <optional>
 
 namespace compute = boost::compute;
 

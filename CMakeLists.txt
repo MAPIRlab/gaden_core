@@ -13,7 +13,7 @@ set(GENERATE_PYTHON_BINDINGS OFF) # requires cppyy. See the readme!
 find_package(OpenMP)
 find_package(fmt)
 find_package(ZLIB)
-find_package(OpenCL)
+find_package(OpenCL REQUIRED)
 
 add_subdirectory(third_party/yaml-cpp)
 add_subdirectory(third_party/compute)

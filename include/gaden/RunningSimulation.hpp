@@ -2,7 +2,6 @@
 #include "Simulation.hpp"
 #include "gaden/EnvironmentConfiguration.hpp"
 #include "gaden/datatypes/sources/PointSource.hpp"
-#include "gaden/internal/GPUAcceleration.hpp"
 
 namespace gaden
 {
@@ -60,7 +59,9 @@ namespace gaden
         void SaveResults();
 
         // Only used in preCalculateConcentrations mode
-        void UpdateConcentrations();
+        void UpdateConcentrationsCPU();
+        void UpdateConcentrationsGPU();
+        void GetAABB(Filament const& filament, Vector3i& min, Vector3i& max);
 
     private:
         Parameters parameters;
@@ -87,7 +88,8 @@ namespace gaden
         std::vector<uint8_t> rawBuffer;
         std::vector<uint8_t> compressedBuffer;
 
+        // these can only be used if GPU_ACCELERATION=1
         std::unique_ptr<class GPUAcceleration> gpuAcc;
-        std::vector<ComputeConcentrationCommand> commands;
+        std::vector<class ComputeConcentrationCommand> gpuCommands;
     };
 } // namespace gaden

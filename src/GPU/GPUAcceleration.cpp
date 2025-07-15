@@ -1,3 +1,5 @@
+#if GPU_ACCELERATION
+
 #include "gaden/internal/GPUAcceleration.hpp"
 #include "DefineTypes.hpp"
 #include "gaden/core/Assertions.hpp"
@@ -158,6 +160,8 @@ namespace gaden
                                                std::vector<Filament> const& filamentsHost)
     {
         ZoneScopedN("ConcentrationsGPU");
+        if (commandsHost.empty())
+            return;
 
         compute::fill(concentrationsGPU.begin(), concentrationsGPU.end(), 0, queue);
         compute::vector<ComputeConcentrationCommand> commandsGPU(commandsHost, queue);
@@ -173,3 +177,5 @@ namespace gaden
         queue.finish();
     }
 } // namespace gaden
+
+#endif

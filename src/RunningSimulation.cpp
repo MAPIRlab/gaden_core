@@ -1,7 +1,6 @@
 #include "gaden/RunningSimulation.hpp"
 #include "YAML_Conversions.hpp"
 #include "gaden/datatypes/GasTypes.hpp"
-#include "gaden/internal/GPUAcceleration.hpp"
 #include "gaden/internal/MathUtils.hpp"
 #include "gaden/internal/Serialization.hpp"
 #include <fstream>
@@ -60,11 +59,16 @@ namespace gaden
             GADEN_SERIOUS_WARN("\n--------\n"
                                "Using 'preCalculateConcentrations'! This will make the simulation very slow. If you don't actively need this behaviour, it is strongly recommended to turn it off.\n"
                                "--------");
-        }
 
-        gpuAcc = std::make_unique<GPUAcceleration>();
-        gpuAcc->Setup(config.environment, simulationMetadata.constants);
+#if GPU_ACCELERATION
+            GADEN_INFO_COLOR(fmt::terminal_color::blue, "Using GPU acceleration");
+            gpuAcc = std::make_unique<GPUAcceleration>();
+            gpuAcc->Setup(config.environment, simulationMetadata.constants);
+            gpuCommands.reserve(1e4);
+#endif
+        }
     }
+
     RunningSimulation::~RunningSimulation()
     {}
 
@@ -76,7 +80,12 @@ namespace gaden
         if (parameters.saveResults && currentTime > lastSaveTime + parameters.saveDeltaTime)
         {
             if (parameters.preCalculateConcentrations)
-                UpdateConcentrations();
+#if GPU_ACCELERATION
+                UpdateConcentrationsGPU();
+#else
+                UpdateConcentrationsCPU();
+#endif
+
             SaveResults();
             lastSaveTime = currentTime;
         }
@@ -262,36 +271,81 @@ namespace gaden
         return Environment::CellState::Free;
     }
 
-    void RunningSimulation::UpdateConcentrations()
+    void RunningSimulation::UpdateConcentrationsCPU()
     {
+#pragma parallel for
+        for (size_t i = 0; i < concentrations->size(); i++)
+            (*concentrations)[i] = 0;
+
+        for (Filament const& filament : *activeFilaments)
+        {
+            Vector3i bbMin;
+            Vector3i bbMax;
+            GetAABB(filament, bbMin, bbMax);
+
+#pragma parallel for collapse(3)
+            for (size_t x = bbMin.x; x <= bbMax.x; x++)
+                for (size_t y = bbMin.y; y <= bbMax.x; y++)
+                    for (size_t z = bbMin.z; z <= bbMax.z; z++)
+                    {
+                        Vector3i indices{x, y, z};
+                        Vector3 samplePoint = config.environment.coordsOfCellCenter(indices);
+                        if (CheckLineOfSight(filament.position, samplePoint))
+                            (*concentrations)[config.environment.indexFrom3D(indices)] += CalculateConcentrationSingleFilament(filament, samplePoint);
+                    }
+        }
+    }
+
+    void RunningSimulation::UpdateConcentrationsGPU()
+    {
+#if GPU_ACCELERATION
+
         ZoneScoped;
-        commands.reserve(1e4);
 
         for (size_t i = 0; i < activeFilaments->size(); i++)
         {
             Filament const& filament = (*activeFilaments)[i];
-            Vector3i bbMin = config.environment.coordsToIndices(filament.position - filament.sigma * 3 / 100.f);
-            Vector3i bbMax = config.environment.coordsToIndices(filament.position + filament.sigma * 3 / 100.f);
+            Vector3i bbMin;
+            Vector3i bbMax;
+            GetAABB(filament, bbMin, bbMax);
 
-            bbMin.x = std::max(bbMin.x, 0);
-            bbMin.y = std::max(bbMin.y, 0);
-            bbMin.z = std::max(bbMin.z, 0);
+            // this is just so we can fill up the vector using multiple threads
+            Vector3i extents = bbMax - bbMin;
+            size_t bbSize = (extents.x + 1) * (extents.y + 1) * (extents.z + 1);
+            size_t start = gpuCommands.size();
+            gpuCommands.resize(gpuCommands.size() + bbSize);
 
-            bbMax.x = std::min(bbMax.x, config.environment.description.dimensions.x);
-            bbMax.y = std::min(bbMax.y, config.environment.description.dimensions.y);
-            bbMax.z = std::min(bbMax.z, config.environment.description.dimensions.z);
-
-            // #pragma parallel for collapse(3)
+#pragma omp parallel for collapse(3)
             for (size_t x = bbMin.x; x < bbMax.x; x++)
                 for (size_t y = bbMin.y; y < bbMax.x; y++)
                     for (size_t z = bbMin.z; z < bbMax.z; z++)
                     {
-                        commands.push_back({.indices = {x, y, z}, .filament = static_cast<uint32_t>(i)});
+                        size_t index = start + x + y * extents.x + z * extents.x * extents.y;
+                        gpuCommands[index].indices = {x, y, z};
+                        gpuCommands[index].filament = static_cast<uint32_t>(i);
                     }
         }
 
-        gpuAcc->UpdateConcentrations(commands, *concentrations, *activeFilaments);
-        commands.clear();
+        gpuAcc->UpdateConcentrations(gpuCommands, *concentrations, *activeFilaments);
+        gpuCommands.clear();
+#else
+        GADEN_SERIOUS_ERROR("Tried to call UpdateConcentrationsGPU(), but core library was compiled without GPU acceleration support.");
+        GADEN_TERMINATE;
+#endif
+    }
+
+    void RunningSimulation::GetAABB(Filament const& filament, Vector3i& bbMin, Vector3i& bbMax)
+    {
+        bbMin = config.environment.coordsToIndices(filament.position - filament.sigma * 3 / 100.f);
+        bbMax = config.environment.coordsToIndices(filament.position + filament.sigma * 3 / 100.f);
+
+        bbMin.x = std::max(bbMin.x, 0);
+        bbMin.y = std::max(bbMin.y, 0);
+        bbMin.z = std::max(bbMin.z, 0);
+
+        bbMax.x = std::min(bbMax.x, config.environment.description.dimensions.x-1);
+        bbMax.y = std::min(bbMax.y, config.environment.description.dimensions.y-1);
+        bbMax.z = std::min(bbMax.z, config.environment.description.dimensions.z-1);
     }
 
     void RunningSimulation::SaveResults()

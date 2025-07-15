@@ -1,4 +1,6 @@
 #pragma once
+#if GPU_ACCELERATION
+
 #define CL_TARGET_OPENCL_VERSION 300
 #include "boost/compute.hpp" // IWYU pragma: keep
 #include "gaden/Environment.hpp"
@@ -24,8 +26,8 @@ namespace gaden
         ~GPUAcceleration();
         void Setup(class Environment const& env, SimulationMetadata::Constants const& constants);
         void UpdateConcentrations(std::vector<ComputeConcentrationCommand> const& commandsHost,
-                                               std::vector<float>& concentrationsHost,
-                                               std::vector<Filament> const& filamentsHost);
+                                  std::vector<float>& concentrationsHost,
+                                  std::vector<Filament> const& filamentsHost);
 
     private:
         compute::device gpu = compute::system::default_device();
@@ -38,3 +40,17 @@ namespace gaden
         compute::vector<float> concentrationsGPU;
     };
 } // namespace gaden
+
+#else
+// empty definitions just so we can have the forward declarations in the RunningSimulation header
+namespace gaden
+{
+    struct ComputeConcentrationCommand
+    {
+    };
+
+    class GPUAcceleration
+    {
+    };
+} // namespace gaden
+#endif

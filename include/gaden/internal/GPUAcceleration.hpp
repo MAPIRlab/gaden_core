@@ -1,6 +1,6 @@
 #pragma once
 #define CL_TARGET_OPENCL_VERSION 300
-#include "boost/compute.hpp"
+#include "boost/compute.hpp" // IWYU pragma: keep
 #include "gaden/Environment.hpp"
 #include "gaden/datatypes/Filament.hpp"
 #include "gaden/datatypes/SimulationMetadata.hpp"
@@ -21,6 +21,7 @@ namespace gaden
     {
     public:
         GPUAcceleration();
+        ~GPUAcceleration();
         void Setup(class Environment const& env, SimulationMetadata::Constants const& constants);
         void UpdateConcentrations(std::vector<ComputeConcentrationCommand> const& commandsHost,
                                                std::vector<float>& concentrationsHost,

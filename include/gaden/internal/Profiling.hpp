@@ -19,7 +19,7 @@ namespace gaden
         using TimePoint = std::chrono::_V2::system_clock::time_point;
 
     public:
-        ScopedStopwatch(const std::string& _name = "")
+        [[nodiscard]] ScopedStopwatch(const std::string& _name = "")
         {
             start = clock.now();
             name = _name;

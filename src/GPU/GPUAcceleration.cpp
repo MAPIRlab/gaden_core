@@ -12,7 +12,11 @@ namespace gaden
                                          queue(context, gpu),
                                          envData(context),
                                          concentrationsGPU(context)
+    {}
+
+    GPUAcceleration::~GPUAcceleration()
     {
+        GADEN_INFO("Releasing GPU resources");
     }
 
     void GPUAcceleration::Setup(Environment const& env, SimulationMetadata::Constants const& constants)
@@ -106,7 +110,7 @@ namespace gaden
 
                 if (CheckLineOfSight(readf3(filament.position), samplePoint, envDesc, envData))
                 {
-                    float c = atomic_load(&concentrations[cellIndex]); 
+                    float c = atomic_load(&concentrations[cellIndex]);
                     c += CalculateConcentrationSingleFilament(filament, samplePoint, constants);
                     atomic_store(&concentrations[cellIndex], c);
                 }

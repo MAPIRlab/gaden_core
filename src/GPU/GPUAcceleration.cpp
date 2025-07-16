@@ -46,7 +46,7 @@ namespace gaden
                 return (Vector3i){ind.x, ind.y, ind.z};
             }
 
-            bool CheckLineOfSight(float3 start, float3 end, EnvironmentDescription description, CellState * envData) {
+            bool CheckLineOfSight(float3 start, float3 end, EnvironmentDescription description, uchar * envData) {
                 // Check whether one of the points is outside the valid environment or is not free
                 Vector3i startInd = coordsToIndices(start, description);
                 Vector3i endInd = coordsToIndices(end, description);
@@ -100,7 +100,7 @@ namespace gaden
                                global Filament * filaments,
                                global atomic_float * concentrations,
                                EnvironmentDescription envDesc,
-                               global CellState * envData,
+                               global uchar * envData,
                                Constants constants) {
                 int i = get_global_id(0);
 
@@ -149,6 +149,7 @@ namespace gaden
         envData.resize(env.cells.size(), queue);
         compute::copy(env.cells.begin(), env.cells.end(), envData.begin(), queue);
 
+        concentrationsKernel->set_arg(2, concentrationsGPU);
         concentrationsKernel->set_arg(3, sizeof(Environment::Description), &env.description);
         concentrationsKernel->set_arg(4, envData.get_buffer());
         concentrationsKernel->set_arg(5, sizeof(SimulationMetadata::Constants), &constants);
@@ -169,7 +170,6 @@ namespace gaden
 
         concentrationsKernel->set_arg(0, commandsGPU);
         concentrationsKernel->set_arg(1, filamentsGPU);
-        concentrationsKernel->set_arg(2, concentrationsGPU);
         queue.enqueue_1d_range_kernel(*concentrationsKernel, 0, commandsHost.size(), 0);
 
         compute::copy(concentrationsGPU.begin(), concentrationsGPU.end(), concentrationsHost.begin(), queue);

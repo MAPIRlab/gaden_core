@@ -7,3 +7,6 @@
 [submodule "third_party/compute"]
 	path = third_party/compute
 	url = git@github.com:boostorg/compute.git
+[submodule "third_party/libbsc"]
+	path = third_party/libbsc
+	url = git@github.com:IlyaGrebnov/libbsc.git

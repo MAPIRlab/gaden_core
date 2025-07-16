@@ -1,5 +1,6 @@
 #pragma once
 #include <fstream>
+#include <gaden/internal/compression.hpp>
 #include <string.h>
 #include <string>
 #include <vector>
@@ -30,8 +31,8 @@ namespace gaden
             void Write(T* address)
             {
                 static_assert(std::is_trivially_copyable_v<T>,
-                      "Type is not trivially copyable! If your type contains dynamic memory (strings, vectors, etc) you must explicitly define how to serialize it");
-        
+                              "Type is not trivially copyable! If your type contains dynamic memory (strings, vectors, etc) you must explicitly define how to serialize it");
+
                 Write(address, sizeof(T));
             }
 
@@ -80,10 +81,10 @@ namespace gaden
 
             template <typename T>
             void Read(T* address)
-            { 
+            {
                 static_assert(std::is_trivially_copyable_v<T>,
-                      "Type is not trivially copyable! If your type contains dynamic memory (strings, vectors, etc) you must explicitly define how to serialize it");
-        
+                              "Type is not trivially copyable! If your type contains dynamic memory (strings, vectors, etc) you must explicitly define how to serialize it");
+
                 Read(address, sizeof(T));
             }
 
@@ -173,17 +174,24 @@ namespace gaden
             return contents == resultHeader;
         }
 
+        inline void SkipGadenHeader(std::ifstream& fileStream)
+        {
+            if (IsModernResultsFile(fileStream))
+                fileStream.seekg(sizeof(resultHeader));
+        }
+
         // modern files contain this data. Old files do not, so this will just return the default max buffer size (which, to be fair, should always be enough)
-        // the read position of the stream is left at the start of the compressed data, ready for the main read
         inline size_t SizeRequiredToUncompress(std::ifstream& fileStream)
         {
             if (!IsModernResultsFile(fileStream))
                 return defaultBufferSize;
 
-            fileStream.seekg(sizeof(resultHeader), std::ios_base::beg);
-            size_t size;
-            fileStream.read((char*)&size, sizeof(size));
+            size_t pos = fileStream.tellg();
+            SkipGadenHeader(fileStream);
+            size_t size = LibBSC::DecompressedSize(fileStream);
+            fileStream.seekg(pos);
             return size;
         }
+
     } // namespace serialization
 } // namespace gaden

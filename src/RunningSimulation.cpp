@@ -310,8 +310,8 @@ namespace gaden
             GetAABB(filament, bbMin, bbMax);
 
             // this is just so we can fill up the vector using multiple threads
-            Vector3i extents = bbMax - bbMin;
-            size_t bbSize = (extents.x + 1) * (extents.y + 1) * (extents.z + 1);
+            Vector3i extents = (bbMax - bbMin) + Vector3i(1);
+            size_t bbSize = extents.x * extents.y * extents.z;
             size_t start = gpuCommands.size();
             gpuCommands.resize(gpuCommands.size() + bbSize);
 
@@ -369,9 +369,11 @@ namespace gaden
 
         if (uncompressedSize > rawBuffer.size())
         {
-            size_t newSize = uncompressedSize * 1.5;
-            rawBuffer.resize(newSize); // try to avoid having to resize all the time
+            size_t newSize = uncompressedSize * 1.5; // try to avoid having to resize all the time
+            rawBuffer.resize(newSize);
             GADEN_INFO("Resizing raw buffer to {} bytes", newSize);
+            compressedBuffer.resize(newSize);
+            GADEN_INFO("Resizing compressed buffer to {} bytes", newSize);
         }
 
         // write all the data as-is into a buffer, which we will then compress
@@ -403,18 +405,11 @@ namespace gaden
         }
 
         // compression with zlib
-        size_t compressedBound = zlib::compressBound(writer.currentOffset());
-        if (compressedBuffer.size() < compressedBound)
-        {
-            size_t compressedBound = uncompressedSize * 1.5;
-            compressedBuffer.resize(compressedBound); // try to avoid having to resize all the time
-            GADEN_INFO("Resizing compressed buffer to {} bytes", compressedBound);
-        }
-
         zlib::uLongf destLength = compressedBuffer.size();
         {
             ZoneScopedN("Compress");
-            zlib::compress2(compressedBuffer.data(), &destLength, rawBuffer.data(), writer.currentOffset(), 1);
+            destLength = LibBSC::Compress(rawBuffer.data(), writer.currentOffset(), compressedBuffer.data());
+            // zlib::compress2(compressedBuffer.data(), &destLength, rawBuffer.data(), writer.currentOffset(), 1);
         }
 
         // write to disk
@@ -423,7 +418,7 @@ namespace gaden
 
             std::ofstream results_file(path);
             results_file.write(serialization::resultHeader, sizeof(serialization::resultHeader));
-            results_file.write((char*)&uncompressedSize, sizeof(uncompressedSize));
+            // results_file.write((char*)&uncompressedSize, sizeof(uncompressedSize));
             results_file.write((char*)compressedBuffer.data(), destLength);
             results_file.close();
         }

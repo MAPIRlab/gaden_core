@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(gaden_core)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -20,6 +20,7 @@ find_package(ZLIB REQUIRED)
 set(CMAKE_DEBUG_POSTFIX "") # to prevent liking errors with yaml-cpp if compiling in debug mode for the first time
 add_subdirectory(third_party/yaml-cpp)
 add_subdirectory(third_party/compute)
+add_subdirectory(third_party/libbsc)
 
 add_library(gaden SHARED
     src/CoppeliaSim.cpp
@@ -48,7 +49,9 @@ target_link_libraries(gaden
     OpenMP::OpenMP_CXX 
     fmt 
     ZLIB::ZLIB
+    bsc::libbsc
 )
+target_include_directories(gaden PUBLIC third_party/libbsc)
 
 # Utility executables for dealing with different file formats involved in gaden simulation 
 add_subdirectory(utils/STL)

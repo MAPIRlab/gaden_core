@@ -2,7 +2,6 @@
 #include "gaden/internal/Serialization.hpp"
 #include <fstream>
 #include <gaden/PlaybackSimulation.hpp>
-#include <gaden/internal/compression.hpp>
 
 namespace gaden
 {
@@ -40,6 +39,7 @@ namespace gaden
         // calculate the buffer sizes and resize if needed
         std::ifstream infile(filename, std::ios_base::binary);
         size_t uncompressedSize = serialization::SizeRequiredToUncompress(infile);
+        serialization::SkipGadenHeader(infile);
         size_t compressedSize = serialization::RemainingFileSize(infile);
 
         if (compressedBuffer.size() < compressedSize)
@@ -62,8 +62,9 @@ namespace gaden
         infile.close();
 
         // decompress the contents
-        zlib::uLongf bufferSize = rawBuffer.size();
-        zlib::uncompress(rawBuffer.data(), &uncompressedSize, compressedBuffer.data(), compressedBuffer.size());
+        // zlib::uLongf bufferSize = rawBuffer.size();
+        // zlib::uncompress(rawBuffer.data(), &uncompressedSize, compressedBuffer.data(), compressedBuffer.size());
+        LibBSC::Decompress(compressedBuffer.data(), rawBuffer.data());
 
         serialization::BufferReader reader((char*)rawBuffer.data(), uncompressedSize);
 

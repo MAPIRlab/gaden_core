@@ -285,13 +285,13 @@ namespace gaden
 
 #pragma parallel for collapse(3)
             for (size_t x = bbMin.x; x <= bbMax.x; x++)
-                for (size_t y = bbMin.y; y <= bbMax.x; y++)
+                for (size_t y = bbMin.y; y <= bbMax.y; y++)
                     for (size_t z = bbMin.z; z <= bbMax.z; z++)
                     {
                         Vector3i indices{x, y, z};
                         Vector3 samplePoint = config.environment.coordsOfCellCenter(indices);
                         if (CheckLineOfSight(filament.position, samplePoint))
-                            (*concentrations)[config.environment.indexFrom3D(indices)] += CalculateConcentrationSingleFilament(filament, samplePoint);
+                            concentrations->at(config.environment.indexFrom3D(indices)) += CalculateConcentrationSingleFilament(filament, samplePoint);
                     }
         }
     }
@@ -316,13 +316,16 @@ namespace gaden
             gpuCommands.resize(gpuCommands.size() + bbSize);
 
 #pragma omp parallel for collapse(3)
-            for (size_t x = bbMin.x; x < bbMax.x; x++)
-                for (size_t y = bbMin.y; y < bbMax.x; y++)
-                    for (size_t z = bbMin.z; z < bbMax.z; z++)
+            for (size_t z = bbMin.z; z <= bbMax.z; z++)
+                for (size_t y = bbMin.y; y <= bbMax.y; y++)
+                    for (size_t x = bbMin.x; x <= bbMax.x; x++)
                     {
-                        size_t index = start + x + y * extents.x + z * extents.x * extents.y;
-                        gpuCommands[index].indices = {x, y, z};
-                        gpuCommands[index].filament = static_cast<uint32_t>(i);
+                        size_t x_ind = x - bbMin.x;
+                        size_t y_ind = y - bbMin.y;
+                        size_t z_ind = z - bbMin.z;
+                        size_t index = start + x_ind + y_ind * extents.x + z_ind * extents.x * extents.y;
+                        gpuCommands.at(index).indices = {x, y, z};
+                        gpuCommands.at(index).filament = static_cast<uint32_t>(i);
                     }
         }
 
@@ -343,9 +346,9 @@ namespace gaden
         bbMin.y = std::max(bbMin.y, 0);
         bbMin.z = std::max(bbMin.z, 0);
 
-        bbMax.x = std::min(bbMax.x, config.environment.description.dimensions.x-1);
-        bbMax.y = std::min(bbMax.y, config.environment.description.dimensions.y-1);
-        bbMax.z = std::min(bbMax.z, config.environment.description.dimensions.z-1);
+        bbMax.x = std::min(bbMax.x, config.environment.description.dimensions.x - 1);
+        bbMax.y = std::min(bbMax.y, config.environment.description.dimensions.y - 1);
+        bbMax.z = std::min(bbMax.z, config.environment.description.dimensions.z - 1);
     }
 
     void RunningSimulation::SaveResults()

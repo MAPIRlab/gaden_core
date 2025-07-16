@@ -38,6 +38,9 @@ namespace gaden
 
         // calculate the buffer sizes and resize if needed
         std::ifstream infile(filename, std::ios_base::binary);
+        // TODO this should be an enum inside the header
+        bool isModernFile = serialization::IsModernResultsFile(infile); // pre 3.0 files use zlib, post 3.0 use libbsc
+
         size_t uncompressedSize = serialization::SizeRequiredToUncompress(infile);
         serialization::SkipGadenHeader(infile);
         size_t compressedSize = serialization::RemainingFileSize(infile);
@@ -62,9 +65,13 @@ namespace gaden
         infile.close();
 
         // decompress the contents
-        // zlib::uLongf bufferSize = rawBuffer.size();
-        // zlib::uncompress(rawBuffer.data(), &uncompressedSize, compressedBuffer.data(), compressedBuffer.size());
-        LibBSC::Decompress(compressedBuffer.data(), rawBuffer.data());
+        if (isModernFile)
+            LibBSC::Decompress(compressedBuffer.data(), rawBuffer.data());
+        else
+        {
+            zlib::uLongf bufferSize = rawBuffer.size();
+            zlib::uncompress(rawBuffer.data(), &uncompressedSize, compressedBuffer.data(), compressedBuffer.size());
+        }
 
         serialization::BufferReader reader((char*)rawBuffer.data(), uncompressedSize);
 

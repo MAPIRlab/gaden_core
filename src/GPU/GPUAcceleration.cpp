@@ -26,6 +26,17 @@ namespace gaden
         // Source code
         //-----------------------------
         std::string source = BOOST_COMPUTE_STRINGIZE_SOURCE(
+
+            // OpenCL float atomicadd hack:
+            // http://suhorukov.blogspot.co.uk/2011/12/opencl-11-atomic-operations-on-floating.html
+            // https://devtalk.nvidia.com/default/topic/458062/atomicadd-float-float-atomicmul-float-float-/
+            inline float atomicadd(volatile __global float* address, const float value) {
+                float old = value, orig;
+                while ((old = atomic_xchg(address, (orig = atomic_xchg(address, 0.0f)) + old)) != 0.0f)
+                    ;
+                return orig;
+            }
+
             typedef enum {
                 Free = 0,        // cell is empty, gas can be here
                 Obstacle = 1,    // cell is occupied by an obstacle, no filaments can go through it
@@ -112,9 +123,8 @@ namespace gaden
 
                 if (CheckLineOfSight(readf3(filament.position), samplePoint, envDesc, envData))
                 {
-                    float c = atomic_load(&concentrations[cellIndex]);
-                    c += CalculateConcentrationSingleFilament(filament, samplePoint, constants);
-                    atomic_store(&concentrations[cellIndex], c);
+                    float c = CalculateConcentrationSingleFilament(filament, samplePoint, constants);
+                    atomicadd(&concentrations[cellIndex], c);
                 }
             });
         //-----------------------------

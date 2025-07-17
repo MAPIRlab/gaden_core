@@ -38,12 +38,17 @@ namespace gaden
 
         // calculate the buffer sizes and resize if needed
         std::ifstream infile(filename, std::ios_base::binary);
-        // TODO this should be an enum inside the header
-        bool isModernFile = serialization::IsModernResultsFile(infile); // pre 3.0 files use zlib, post 3.0 use libbsc
+        bool isModernFile = serialization::IsModernResultsFile(infile);
+        serialization::FileCompressionMetadata compressionMetadata = serialization::GetCompressionMetadata(infile);
 
-        size_t uncompressedSize = serialization::SizeRequiredToUncompress(infile);
+        // figure out how the file was compressed. Old files always used DEFLATE (zlib), but new ones have an enum in the header
         serialization::SkipGadenHeader(infile);
+
+        // size the buffers
         size_t compressedSize = serialization::RemainingFileSize(infile);
+        // uncompressed files
+        if (compressionMetadata.uncompressedSize == 0)
+            compressionMetadata.uncompressedSize = compressedSize;
 
         if (compressedBuffer.size() < compressedSize)
         {
@@ -52,28 +57,27 @@ namespace gaden
             GADEN_INFO("Resizing compressedBuffer to {} bytes", newSize);
         }
 
-        if (rawBuffer.size() < uncompressedSize)
+        if (rawBuffer.size() < compressionMetadata.uncompressedSize)
         {
-            size_t newSize = uncompressedSize * 1.5;
+            size_t newSize = compressionMetadata.uncompressedSize * 1.5;
             rawBuffer.resize(newSize);
             GADEN_INFO("Resizing rawBuffer to {} bytes", newSize);
         }
 
         // read the file
-        // the stream position is set to the start of the compressed area (even in modern files with an uncompressed header) by SizeRequiredToUncompress()
+        // the stream position is set to the start of the compressed area (even in modern files with an uncompressed header)
         infile.read((char*)compressedBuffer.data(), compressedSize);
         infile.close();
 
         // decompress the contents
-        if (isModernFile)
+        if (compressionMetadata.mode == serialization::CompressionMode::LIBBSC)
             LibBSC::Decompress(compressedBuffer.data(), rawBuffer.data());
+        else if (compressionMetadata.mode == serialization::CompressionMode::ZLIB)
+            zlib::uncompress(rawBuffer.data(), &compressionMetadata.uncompressedSize, compressedBuffer.data(), compressedBuffer.size());
         else
-        {
-            zlib::uLongf bufferSize = rawBuffer.size();
-            zlib::uncompress(rawBuffer.data(), &uncompressedSize, compressedBuffer.data(), compressedBuffer.size());
-        }
+            memcpy(rawBuffer.data(), compressedBuffer.data(), compressionMetadata.uncompressedSize);
 
-        serialization::BufferReader reader((char*)rawBuffer.data(), uncompressedSize);
+        serialization::BufferReader reader((char*)rawBuffer.data(), compressionMetadata.uncompressedSize);
 
         // check the version of gaden used to generate the file
         reader.Read(&config.environment.versionMajor);

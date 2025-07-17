@@ -361,19 +361,21 @@ namespace gaden
         std::filesystem::path path = fmt::format("{}/iteration_{}", savePath, last_saved_step);
 
         // calculate the size we need the buffer to have
-        size_t uncompressedSize;
-        if (parameters.preCalculateConcentrations)
-            uncompressedSize = concentrations->size() * sizeof(float) + 1000; // 1000 bytes is plenty for the all the environment information
-        else
-            uncompressedSize = activeFilaments->size() * sizeof(Filament) + 1000;
-
-        if (uncompressedSize > rawBuffer.size())
         {
-            size_t newSize = uncompressedSize * 1.5; // try to avoid having to resize all the time
-            rawBuffer.resize(newSize);
-            GADEN_INFO("Resizing raw buffer to {} bytes", newSize);
-            compressedBuffer.resize(newSize);
-            GADEN_INFO("Resizing compressed buffer to {} bytes", newSize);
+            size_t uncompressedSize;
+            if (parameters.preCalculateConcentrations)
+                uncompressedSize = concentrations->size() * sizeof(float) + 1000; // 1000 bytes is plenty for the all the environment information
+            else
+                uncompressedSize = activeFilaments->size() * sizeof(Filament) + 1000;
+
+            if (uncompressedSize > rawBuffer.size())
+            {
+                size_t newSize = uncompressedSize * 1.5; // try to avoid having to resize all the time
+                rawBuffer.resize(newSize);
+                GADEN_INFO("Resizing raw buffer to {} bytes", newSize);
+                compressedBuffer.resize(newSize);
+                GADEN_INFO("Resizing compressed buffer to {} bytes", newSize);
+            }
         }
 
         // write all the data as-is into a buffer, which we will then compress
@@ -404,12 +406,24 @@ namespace gaden
             writer.WriteVector(&(*concentrations));
         }
 
+        // decide which compression algorithm to use. ZLIB is faster for small files, LIBBSC is faster for large files
+        serialization::CompressionMode compressionMode;
+        size_t uncompressedSize = writer.currentOffset();
+        if (uncompressedSize > 5e6)
+            compressionMode = serialization::CompressionMode::LIBBSC;
+        else
+            compressionMode = serialization::CompressionMode::ZLIB;
+
         // compression with zlib
         zlib::uLongf destLength = compressedBuffer.size();
         {
             ZoneScopedN("Compress");
-            destLength = LibBSC::Compress(rawBuffer.data(), writer.currentOffset(), compressedBuffer.data());
-            // zlib::compress2(compressedBuffer.data(), &destLength, rawBuffer.data(), writer.currentOffset(), 1);
+            if (compressionMode == serialization::CompressionMode::LIBBSC)
+                destLength = LibBSC::Compress(rawBuffer.data(), writer.currentOffset(), compressedBuffer.data());
+            else if (compressionMode == serialization::CompressionMode::ZLIB)
+                zlib::compress2(compressedBuffer.data(), &destLength, rawBuffer.data(), writer.currentOffset(), 1);
+            else if (compressionMode == serialization::CompressionMode::UNCOMPRESSED)
+                memcpy(compressedBuffer.data(), rawBuffer.data(), writer.currentOffset());
         }
 
         // write to disk
@@ -417,10 +431,19 @@ namespace gaden
             ZoneScopedN("WriteToDisk");
 
             std::ofstream results_file(path);
-            results_file.write(serialization::resultHeader, sizeof(serialization::resultHeader));
-            // results_file.write((char*)&uncompressedSize, sizeof(uncompressedSize));
+            // file header
+            results_file.write(serialization::resultIdentifier, sizeof(serialization::resultIdentifier));
+            results_file.write((char*)&compressionMode, sizeof(compressionMode));
+            results_file.write((char*)&uncompressedSize, sizeof(uncompressedSize));
+
             results_file.write((char*)compressedBuffer.data(), destLength);
             results_file.close();
+
+            // when profiling as sudo, files are created as owned by root, which means you then can't delete them as a normal user
+            std::filesystem::permissions(
+                path,
+                std::filesystem::perms::owner_all | std::filesystem::perms::group_all,
+                std::filesystem::perm_options::add);
         }
         last_saved_step++;
     }

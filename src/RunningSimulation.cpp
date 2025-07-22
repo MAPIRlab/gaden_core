@@ -16,7 +16,8 @@ namespace gaden
     RunningSimulation::RunningSimulation(Parameters params, std::shared_ptr<EnvironmentConfiguration> const& envConfig)
         : parameters(params), Simulation(envConfig)
     {
-        config->windSequence.loopConfig = parameters.windLoop;
+        if (parameters.windLoop)
+            config->windSequence.loopConfig = *parameters.windLoop;
 
         // this is a backwards compatibility hack
         // noise used to not consider deltaTime (bad), now it does (good)
@@ -92,7 +93,7 @@ namespace gaden
             lastSaveTime = currentTime;
         }
 
-        if (currentTime > lastWindUpdateTime + parameters.windIterationDeltaTime)
+        if (parameters.windLoop && currentTime > lastWindUpdateTime + parameters.windIterationDeltaTime)
         {
             config->windSequence.AdvanceTimeStep();
             lastWindUpdateTime = currentTime;
@@ -516,8 +517,11 @@ namespace gaden
             emitter << YAML::Key << "preCalculateConcentrations"<< YAML::Value << preCalculateConcentrations;
             // clang-format on
 
-            emitter << YAML::Key << "windLooping";
-            WriteLoopYAML(emitter, windLoop);
+            if (windLoop)
+            {
+                emitter << YAML::Key << "windLooping";
+                WriteLoopYAML(emitter, *windLoop);
+            }
 
             std::ofstream file(path);
             file << emitter.c_str();

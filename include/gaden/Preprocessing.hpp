@@ -19,7 +19,7 @@ namespace gaden
                                                      const Environment& env,
                                                      LoopConfig loopConfig);
 
-        static std::optional<EnvironmentConfiguration> Preprocess(EnvironmentConfigMetadata const& metadata);
+        static std::shared_ptr<EnvironmentConfiguration> Preprocess(EnvironmentConfigMetadata const& metadata);
 
     private:
         struct BoundingBox

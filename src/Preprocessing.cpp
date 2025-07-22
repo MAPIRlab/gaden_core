@@ -134,11 +134,11 @@ namespace gaden
         return sequence;
     }
 
-    std::optional<EnvironmentConfiguration> Preprocessing::Preprocess(EnvironmentConfigMetadata const& metadata)
+    std::shared_ptr<EnvironmentConfiguration> Preprocessing::Preprocess(EnvironmentConfigMetadata const& metadata)
     {
         try
         {
-            EnvironmentConfiguration config;
+            auto config = std::make_shared<EnvironmentConfiguration>();
             std::vector<std::filesystem::path> envModels;
             for (auto& model : metadata.envModels)
                 envModels.push_back(model.path);
@@ -147,18 +147,18 @@ namespace gaden
             for (auto& model : metadata.outletModels)
                 outletModels.push_back(model.path);
 
-            config.environment = ParseSTLModels(envModels, outletModels, metadata.cellSize, metadata.emptyPoint);
+            config->environment = ParseSTLModels(envModels, outletModels, metadata.cellSize, metadata.emptyPoint);
 
             if (metadata.uniformWind)
-                config.windSequence = WindSequence::CreateUniformWind(metadata.GetWindFiles()[0], config.environment.numCells());
+                config->windSequence = WindSequence::CreateUniformWind(metadata.GetWindFiles()[0], config->environment.numCells());
             else
-                config.windSequence = ParseOpenFoamVectorCloud(metadata.GetWindFiles(), config.environment, {});
+                config->windSequence = ParseOpenFoamVectorCloud(metadata.GetWindFiles(), config->environment, {});
             return config;
         }
         catch (std::exception const& e)
         {
             GADEN_ERROR("Exception while trying to run preprocessing: '{}'", e.what());
-            return std::nullopt;
+            return nullptr;
         }
     }
 

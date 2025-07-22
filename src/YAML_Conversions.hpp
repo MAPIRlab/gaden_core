@@ -4,6 +4,7 @@
 #include "gaden/datatypes/LoopConfig.hpp"
 #include "gaden/datatypes/Model3D.hpp"
 #include "gaden/internal/PathUtils.hpp"
+#include <optional>
 #include <yaml-cpp/yaml.h>
 
 namespace YAML
@@ -67,19 +68,28 @@ namespace YAML
 namespace gaden
 {
     template <typename T>
-    inline void FromYAML(YAML::Node const& node, std::string const& key, T& value)
+    inline bool FromYAML(YAML::Node const& node, std::string const& key, T& value)
     {
         if (auto param = node[key])
+        {
             value = param.as<T>();
+            return true;
+        }
+        return false;
     }
 
-    inline LoopConfig ParseLoopYAML(YAML::Node const& node)
+    inline std::optional<LoopConfig> ParseLoopYAML(YAML::Node const& node)
     {
         LoopConfig config;
-        FromYAML<bool>(node, "loop", config.loop);
-        FromYAML<size_t>(node, "from", config.from);
-        FromYAML<size_t>(node, "to", config.to);
-        return config;
+        bool valid = true;
+        valid = valid && FromYAML<bool>(node, "loop", config.loop);
+        valid = valid && FromYAML<size_t>(node, "from", config.from);
+        valid = valid && FromYAML<size_t>(node, "to", config.to);
+
+        if (valid)
+            return config;
+        else
+            return std::nullopt;
     }
 
     inline void WriteLoopYAML(YAML::Emitter& emitter, LoopConfig const& config)

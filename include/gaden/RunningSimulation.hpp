@@ -23,7 +23,7 @@ namespace gaden
             float numFilaments_sec = 10;          // How many filaments to release per second
             size_t expectedNumIterations = 600;   // To give initial size to filament vector. If you run the simulator longer than this, there will be a reallocation -- so, bad for performance :_(
 
-            LoopConfig windLoop;
+            std::optional<LoopConfig> windLoop; // if this is not null, the simulation advances the wind sequence as time passes
 
             // you can query the simulation as it runs, or store the state of the gas dispersion to disk and play it back later
             bool saveResults = false;

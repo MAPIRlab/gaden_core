@@ -22,8 +22,12 @@ namespace gaden
         static std::vector<std::filesystem::path> GetPaths(std::vector<Model3D> const& models);
         std::vector<std::filesystem::path> GetWindFiles() const;
         std::filesystem::path GetSimulationFilePath(std::string_view name) { return rootDirectory / "simulations" / name / "sim.yaml"; }
+        std::filesystem::path GetSceneFilePath(std::string name) { return rootDirectory / "scenes" / (name + ".yaml"); }
         std::filesystem::path GetConfigFilePath() { return rootDirectory / "config.yaml"; }
         static bool CreateTemplate(std::filesystem::path const& directory);
+        PlaybackSceneMetadata GetPlaybackScene(std::string const& name);
+        RunningSceneMetadata GetRunningScene(std::string const& name);
+        std::vector<std::string> GetSimulationNamesInScene(std::string const& sceneName);
 
     public:
         std::vector<Model3D> envModels;
@@ -35,7 +39,7 @@ namespace gaden
         std::string unprocessedWindFiles = ""; // the path, as appears in the configuration file (without the _i.csv suffix)
 
         std::map<std::string, SimulationParams> simulations;
-        std::map<std::string, PlaybackSceneMetadata> scenes;
+        std::unordered_set<std::string> scenes; // we can't use a map here because the type of the scene metadata (running or playback) is decided when using it (both correspond to the same file)
         std::filesystem::path rootDirectory;
 
     private:

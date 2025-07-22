@@ -11,7 +11,7 @@ namespace gaden
         std::vector<PlaybackSimulation::Parameters> params;
         std::vector<Color> gasDisplayColors;
         LoopConfig loop;
-        void ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot);
+        bool ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot);
         void WriteToYAML(std::filesystem::path const& path);
     };
 
@@ -19,7 +19,9 @@ namespace gaden
     {
         std::vector<RunningSimulation::Parameters> params;
         std::vector<Color> gasDisplayColors;
-        void ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot);
+        LoopConfig loop;
+        bool ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot);
+        void WriteToYAML(std::filesystem::path const& path);
     };
 
     class Scene

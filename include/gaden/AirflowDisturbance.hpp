@@ -19,16 +19,31 @@ namespace gaden::Airflow
                                 float pressure,
                                 float temperature)
         {
-            #pragma omp parallel for
+#pragma omp parallel for
             for (size_t i = 0; i < airflowField.size(); i++)
             {
-                Vector3 coordsPoint = env.coordsOfCellCenter(env.indicesFrom1D(i));
-                Vector3 relativePosition = coordsPoint - dronePosition;
-                float s = -relativePosition.z;
-                float r = vmath::length(Vector2(relativePosition.x, relativePosition.y));
-
-                airflowField.at(i) = Speed(r, s, motorDistance, droneMass, rotorRadius, pressure, temperature) * vmath::normalized(relativePosition);
+                airflowField.at(i) = {0, 0, 0};
             }
+
+            Vector3i bbMin = env.coordsToIndices(dronePosition - Vector3(3, 3, 10));
+            Vector3i bbMax = env.coordsToIndices(dronePosition + Vector3(3, 3, 0));
+            bbMin = glm::max(bbMin, {0, 0, 0});
+            bbMax = glm::min(bbMax, env.description.dimensions - 1);
+
+#pragma omp parallel for collapse(3)
+            for (size_t x = bbMin.x; x < bbMax.x; x++)
+                for (size_t y = bbMin.y; y < bbMax.y; y++)
+                    for (size_t z = bbMin.z; z < bbMax.z; z++)
+                    {
+                        size_t i = env.indexFrom3D({x, y, z});
+                        Vector3 coordsPoint = env.coordsOfCellCenter(env.indicesFrom1D(i));
+                        Vector3 relativePosition = coordsPoint - dronePosition;
+                        float s = -relativePosition.z;
+                        float r = vmath::length(Vector2(relativePosition.x, relativePosition.y));
+
+                        // relativePosition.z *= 0.7;
+                        airflowField.at(i) = Speed(r, s, motorDistance, droneMass, rotorRadius, pressure, temperature) * vmath::normalized(relativePosition);
+                    }
         }
 
         //  calculates the airflow velocity caused by a hovering quadrotor at point (r,s)

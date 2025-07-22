@@ -10,7 +10,7 @@ namespace gaden
     class Simulation
     {
     public:
-        Simulation(const EnvironmentConfiguration& configuration)
+        Simulation(const std::shared_ptr<EnvironmentConfiguration>& configuration)
             : config(configuration)
         {}
 
@@ -30,7 +30,7 @@ namespace gaden
         float ConcentrationAtCenter(Filament const& filament) const;
 
     public:
-        EnvironmentConfiguration config;
+        std::shared_ptr<EnvironmentConfiguration> config;
         SimulationMetadata simulationMetadata;
 
         Color gasDisplayColor = {0.4, 0.4, 0.4, 1};

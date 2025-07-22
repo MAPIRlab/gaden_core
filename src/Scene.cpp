@@ -87,7 +87,7 @@ namespace gaden
         }
     }
 
-    Scene::Scene(PlaybackSceneMetadata const& metadata, EnvironmentConfiguration const& env)
+    Scene::Scene(PlaybackSceneMetadata const& metadata, std::shared_ptr<EnvironmentConfiguration> const& env)
     {
         GADEN_VERIFY(!metadata.params.empty(), "Cannot create an empty playback scene");
         for (size_t i = 0; i < metadata.params.size(); i++)
@@ -98,7 +98,7 @@ namespace gaden
         }
     }
 
-    Scene::Scene(RunningSceneMetadata const& metadata, EnvironmentConfiguration const& env)
+    Scene::Scene(RunningSceneMetadata const& metadata, std::shared_ptr<EnvironmentConfiguration> const& env)
     {
         GADEN_VERIFY(!metadata.params.empty(), "Cannot create an empty running scene");
         for (size_t i = 0; i < metadata.params.size(); i++)

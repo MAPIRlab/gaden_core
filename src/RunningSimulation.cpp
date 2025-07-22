@@ -13,10 +13,10 @@ namespace gaden
 {
     static thread_local PrecalculatedGaussian<1000> gaussian; // random values following a gaussian distribution, precomputed for speed
 
-    RunningSimulation::RunningSimulation(Parameters params, EnvironmentConfiguration const& envConfig)
+    RunningSimulation::RunningSimulation(Parameters params, std::shared_ptr<EnvironmentConfiguration> const& envConfig)
         : parameters(params), Simulation(envConfig)
     {
-        config.windSequence.loopConfig = parameters.windLoop;
+        config->windSequence.loopConfig = parameters.windLoop;
 
         // this is a backwards compatibility hack
         // noise used to not consider deltaTime (bad), now it does (good)
@@ -42,7 +42,9 @@ namespace gaden
 
         rawBuffer.resize(serialization::defaultBufferSize);
         compressedBuffer.resize(serialization::defaultBufferSize);
-        localAirflowDisturbances.resize(config.environment.numCells(), Vector3(0, 0, 0));
+
+        if (config->localAirflowDisturbances.size() != config->environment.numCells())
+            config->localAirflowDisturbances.resize(config->environment.numCells(), Vector3(0, 0, 0));
 
         if (parameters.saveResults)
         {
@@ -55,7 +57,7 @@ namespace gaden
         if (parameters.preCalculateConcentrations)
         {
             concentrations.emplace();
-            concentrations->resize(envConfig.environment.numCells(), 0.0);
+            concentrations->resize(envConfig->environment.numCells(), 0.0);
             GADEN_SERIOUS_WARN("\n--------\n"
                                "Using 'preCalculateConcentrations'! This will make the simulation very slow. If you don't actively need this behaviour, it is strongly recommended to turn it off.\n"
                                "--------");
@@ -63,7 +65,7 @@ namespace gaden
 #if GPU_ACCELERATION
             GADEN_INFO_COLOR(fmt::terminal_color::blue, "Using GPU acceleration");
             gpuAcc = std::make_unique<GPUAcceleration>();
-            gpuAcc->Setup(config.environment, simulationMetadata.constants);
+            gpuAcc->Setup(config->environment, simulationMetadata.constants);
             gpuCommands.reserve(1e4);
 #endif
         }
@@ -92,7 +94,7 @@ namespace gaden
 
         if (currentTime > lastWindUpdateTime + parameters.windIterationDeltaTime)
         {
-            config.windSequence.AdvanceTimeStep();
+            config->windSequence.AdvanceTimeStep();
             lastWindUpdateTime = currentTime;
         }
 
@@ -107,8 +109,8 @@ namespace gaden
 
     Vector3 RunningSimulation::SampleWind(const Vector3i& indices) const
     {
-        size_t cellIndex = config.environment.indexFrom3D(indices);
-        gaden::Vector3 windVec = config.windSequence.GetCurrent().at(cellIndex) + localAirflowDisturbances.at(cellIndex);
+        size_t cellIndex = config->environment.indexFrom3D(indices);
+        gaden::Vector3 windVec = config->windSequence.GetCurrent().at(cellIndex) + config->localAirflowDisturbances.at(cellIndex);
         return windVec;
     }
 
@@ -129,7 +131,7 @@ namespace gaden
             {
                 position = simulationMetadata.source->Emit();
                 attempts++;
-            } while (!config.environment.IsInBounds(position) && attempts < safetyLimit);
+            } while (!config->environment.IsInBounds(position) && attempts < safetyLimit);
 
             GADEN_VERIFY(attempts < safetyLimit, "Could not spawn filaments around source position! Is it inside the environment bounds?");
 
@@ -172,7 +174,7 @@ namespace gaden
         try
         {
             // Get 3D cell of the filament center
-            Vector3i cellIdx = config.environment.coordsToIndices(filament.position);
+            Vector3i cellIdx = config->environment.coordsToIndices(filament.position);
 
             // 1. Simulate Advection (Va)
             //    Large scale wind-eddies -> Movement of a filament as a whole by wind
@@ -203,7 +205,7 @@ namespace gaden
             // 4. Check filament location
             //------------------------------------
             Environment::CellState destinationState = StepTowards(filament, newPosition);
-            GADEN_ASSERT(config.environment.IsInBounds(filament.position), "Filament is outside environment!");
+            GADEN_ASSERT(config->environment.IsInBounds(filament.position), "Filament is outside environment!");
 
             if (destinationState == Environment::CellState::Outlet)
                 isActive[i] = false;
@@ -224,13 +226,13 @@ namespace gaden
     // move the filament as much as possible towards the desired final position, stopping if we find an obstacle along the way
     Environment::CellState RunningSimulation::StepTowards(Filament& filament, Vector3 end)
     {
-        Vector3i startCell = config.environment.coordsToIndices(filament.position);
-        Vector3i endCell = config.environment.coordsToIndices(end);
+        Vector3i startCell = config->environment.coordsToIndices(filament.position);
+        Vector3i endCell = config->environment.coordsToIndices(end);
 
         if (startCell == endCell)
         {
             filament.position = end;
-            return config.environment.at(startCell);
+            return config->environment.at(startCell);
         }
 
         // Calculate displacement vector
@@ -239,7 +241,7 @@ namespace gaden
         movementDir = vmath::normalized(movementDir);
 
         // Traverse path
-        int steps = ceil(distance / config.environment.description.cellSize); // Make sure no two iteration steps are separated more than 1 cell
+        int steps = ceil(distance / config->environment.description.cellSize); // Make sure no two iteration steps are separated more than 1 cell
         float increment = distance / steps;
 
         for (int i = 0; i < steps; i++)
@@ -249,11 +251,11 @@ namespace gaden
             filament.position += movementDir * increment;
 
             // Check if the cell is occupied
-            Environment::CellState cellState = config.environment.at(filament.position);
+            Environment::CellState cellState = config->environment.at(filament.position);
             if (cellState == Environment::CellState::Obstacle || cellState == Environment::CellState::OutOfBounds)
             {
-                Vector3i previousCell = config.environment.coordsToIndices(previous);
-                Vector3i currentCell = config.environment.coordsToIndices(filament.position);
+                Vector3i previousCell = config->environment.coordsToIndices(previous);
+                Vector3i currentCell = config->environment.coordsToIndices(filament.position);
                 Vector3 normal = previousCell - currentCell;
 
                 filament.position = previous;
@@ -289,9 +291,9 @@ namespace gaden
                     for (size_t z = bbMin.z; z <= bbMax.z; z++)
                     {
                         Vector3i indices{x, y, z};
-                        Vector3 samplePoint = config.environment.coordsOfCellCenter(indices);
+                        Vector3 samplePoint = config->environment.coordsOfCellCenter(indices);
                         if (CheckLineOfSight(filament.position, samplePoint))
-                            concentrations->at(config.environment.indexFrom3D(indices)) += CalculateConcentrationSingleFilament(filament, samplePoint);
+                            concentrations->at(config->environment.indexFrom3D(indices)) += CalculateConcentrationSingleFilament(filament, samplePoint);
                     }
         }
     }
@@ -339,16 +341,16 @@ namespace gaden
 
     void RunningSimulation::GetAABB(Filament const& filament, Vector3i& bbMin, Vector3i& bbMax)
     {
-        bbMin = config.environment.coordsToIndices(filament.position - filament.sigma * 3 / 100.f);
-        bbMax = config.environment.coordsToIndices(filament.position + filament.sigma * 3 / 100.f);
+        bbMin = config->environment.coordsToIndices(filament.position - filament.sigma * 3 / 100.f);
+        bbMax = config->environment.coordsToIndices(filament.position + filament.sigma * 3 / 100.f);
 
         bbMin.x = std::max(bbMin.x, 0);
         bbMin.y = std::max(bbMin.y, 0);
         bbMin.z = std::max(bbMin.z, 0);
 
-        bbMax.x = std::min(bbMax.x, config.environment.description.dimensions.x - 1);
-        bbMax.y = std::min(bbMax.y, config.environment.description.dimensions.y - 1);
-        bbMax.z = std::min(bbMax.z, config.environment.description.dimensions.z - 1);
+        bbMax.x = std::min(bbMax.x, config->environment.description.dimensions.x - 1);
+        bbMax.y = std::min(bbMax.y, config->environment.description.dimensions.y - 1);
+        bbMax.z = std::min(bbMax.z, config->environment.description.dimensions.z - 1);
     }
 
     void RunningSimulation::SaveResults()
@@ -384,12 +386,12 @@ namespace gaden
         writer.Write(&gaden::versionMajor);
         writer.Write(&gaden::versionMinor);
 
-        writer.Write(&config.environment.description);
+        writer.Write(&config->environment.description);
 
         GasSource::SerializeBinary(writer, simulationMetadata.source);
         writer.Write(&simulationMetadata.constants);
 
-        int windIndex = config.windSequence.GetCurrentIndex();
+        int windIndex = config->windSequence.GetCurrentIndex();
         writer.Write(&windIndex); // index of the wind file (they are stored separately under (results_location)/wind/... )
 
         if (!parameters.preCalculateConcentrations)

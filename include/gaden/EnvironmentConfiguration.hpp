@@ -14,9 +14,13 @@ namespace gaden
     {
         Environment environment;
         WindSequence windSequence;
+        
+        std::vector<Vector3> localAirflowDisturbances; // small-scale changes to airflow that happen at runtime.
+                                                       // To be modified from the outside according to whatever model the user code wants to employ.
+                                                       // See AirflowDisturbance.hpp
 
         bool WriteToDirectory(const std::filesystem::path& path);
-        static std::optional<EnvironmentConfiguration> ReadDirectory(const std::filesystem::path& path);
+        static std::shared_ptr<EnvironmentConfiguration> ReadDirectory(const std::filesystem::path& path);
     };
 
 } // namespace gaden

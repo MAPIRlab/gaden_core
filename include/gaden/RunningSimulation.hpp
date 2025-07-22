@@ -19,7 +19,7 @@ namespace gaden
             float filamentPPMcenter_initial = 20; //[ppm] Gas concentration at the center of the 3D gaussian (filament)
             float filamentInitialSigma = 10.0;    //[cm] Sigma of the filament at t=0-> 3DGaussian shape
             float filamentGrowthGamma = 10.0;     //[cm²/s] Growth ratio of the filament_std
-            float filamentNoise_std = 0.01;       // STD to add some "variablity" to the filament location
+            float filamentNoise_std = 0.02;       // STD to add some "variablity" to the filament location
             float numFilaments_sec = 10;          // How many filaments to release per second
             size_t expectedNumIterations = 600;   // To give initial size to filament vector. If you run the simulator longer than this, there will be a reallocation -- so, bad for performance :_(
 
@@ -37,7 +37,7 @@ namespace gaden
         };
 
     public:
-        RunningSimulation(Parameters params, EnvironmentConfiguration const& envConfig);
+        RunningSimulation(Parameters params, std::shared_ptr<EnvironmentConfiguration> const& envConfig);
         ~RunningSimulation(); // we need to declare a destructor because of the unique_ptr to incomplete type (GPUAcc)
         void AdvanceTimestep() override;
         const std::vector<Filament>& GetFilaments() const override;
@@ -45,11 +45,6 @@ namespace gaden
         const Parameters& GetParameters() { return parameters; }
 
         Vector3 SampleWind(const Vector3i& indices) const override;
-
-    public:
-        std::vector<Vector3> localAirflowDisturbances; // small-scale changes to airflow that happen at runtime.
-                                                       // To be modified from the outside according to whatever model the user code wants to employ.
-                                                       // See AirflowDisturbance.hpp
 
     private:
         void AddFilaments();

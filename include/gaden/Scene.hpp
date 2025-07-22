@@ -25,8 +25,8 @@ namespace gaden
     class Scene
     {
     public:
-        Scene(PlaybackSceneMetadata const& metadata, EnvironmentConfiguration const& env);
-        Scene(RunningSceneMetadata const& metadata, EnvironmentConfiguration const& env);
+        Scene(PlaybackSceneMetadata const& metadata, std::shared_ptr<EnvironmentConfiguration> const& env);
+        Scene(RunningSceneMetadata const& metadata, std::shared_ptr<EnvironmentConfiguration> const& env);
         void AdvanceTimestep();
         Vector3 SampleWind(Vector3 const& point) const;
         std::map<GasType, float> SampleConcentrations(Vector3 const& point) const;

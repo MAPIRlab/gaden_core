@@ -10,7 +10,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # generate a python module with bindings to access the library from your python scripts
 set(GENERATE_PYTHON_BINDINGS OFF) # requires cppyy. See the readme!
 set(PROFILING OFF) # adds Tracy as a dependency
-set(GPU_ACCELERATION ON) # compiles with support for GPU-based concentration calculation. Requires OpenCL
+set(GPU_ACCELERATION OFF) # compiles with support for GPU-based concentration calculation. Requires OpenCL
 
 find_package(OpenMP REQUIRED)
 find_package(fmt REQUIRED)

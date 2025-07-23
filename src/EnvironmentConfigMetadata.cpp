@@ -29,7 +29,7 @@ namespace gaden
                 if (auto params = ParseSimulationFolder(sim))
                 {
                     std::string name = sim.stem();
-                    simulations[name] = params.value();
+                    simulations.insert(name);
                     GADEN_INFO("Found simulation configuration: {}", name);
                 }
             }
@@ -188,6 +188,13 @@ namespace gaden
             return false;
         }
         return true;
+    }
+
+    EnvironmentConfigMetadata::SimulationParams EnvironmentConfigMetadata::GetSimulationParams(std::string const& name)
+    {
+        SimulationParams params;
+        params.ReadFromYAML(GetSimulationFilePath(name));
+        return params;
     }
 
     PlaybackSceneMetadata EnvironmentConfigMetadata::GetPlaybackScene(std::string const& name)

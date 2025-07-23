@@ -25,6 +25,7 @@ namespace gaden
         std::filesystem::path GetSceneFilePath(std::string name) { return rootDirectory / "scenes" / (name + ".yaml"); }
         std::filesystem::path GetConfigFilePath() { return rootDirectory / "config.yaml"; }
         static bool CreateTemplate(std::filesystem::path const& directory);
+        SimulationParams GetSimulationParams(std::string const& name);
         PlaybackSceneMetadata GetPlaybackScene(std::string const& name);
         RunningSceneMetadata GetRunningScene(std::string const& name);
         std::vector<std::string> GetSimulationNamesInScene(std::string const& sceneName);
@@ -38,8 +39,8 @@ namespace gaden
         bool uniformWind = false;
         std::string unprocessedWindFiles = ""; // the path, as appears in the configuration file (without the _i.csv suffix)
 
-        std::map<std::string, SimulationParams> simulations;
-        std::unordered_set<std::string> scenes; // we can't use a map here because the type of the scene metadata (running or playback) is decided when using it (both correspond to the same file)
+        std::unordered_set<std::string> simulations;
+        std::unordered_set<std::string> scenes; 
         std::filesystem::path rootDirectory;
 
     private:

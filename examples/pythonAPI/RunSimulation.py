@@ -5,16 +5,16 @@ from gaden_py import gaden
 configMetadata = gaden.EnvironmentConfigMetadata("../example_project/environment_configurations/config1")
 configMetadata.ReadDirectory()
 
-# Create the configuration object (environment + wind data). Function returns an std::optional, so use .value() to access the config object
-envConfig = gaden.Preprocessing.Preprocess(configMetadata).value()
+# Create the configuration object (environment + wind data)
+envConfig = gaden.Preprocessing.Preprocess(configMetadata)
 
-# retrieve the configuration parameters (they were read from the yaml file) by name. 
+# retrieve the configuration parameters (read from the yaml file) by name. 
 # Alternatively, you can create a new gaden.RunningSimulation.Parameters object and populate it manually
-simParams = configMetadata.simulations.at("sim1")
+simParams = configMetadata.GetSimulationParams("sim1")
 
 simulation = gaden.RunningSimulation(simParams, envConfig)
 
 while simulation.GetCurrentTime() < 300:
+    print("Progress: {:.2f}/300.0s".format(simulation.GetCurrentTime()), end="\r")
     simulation.AdvanceTimestep()
-
-print("simulation finished!")
+print("Simulation finished!             ")

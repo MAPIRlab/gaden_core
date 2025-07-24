@@ -1,31 +1,32 @@
 #include "gaden/EnvironmentConfiguration.hpp"
 #include <gaden/internal/PathUtils.hpp>
-#include <optional>
 
 namespace gaden
 {
-    std::optional<EnvironmentConfiguration> EnvironmentConfiguration::ReadDirectory(const std::filesystem::path& directory)
+    std::shared_ptr<EnvironmentConfiguration> EnvironmentConfiguration::ReadDirectory(const std::filesystem::path& directory)
     {
         if (!std::filesystem::is_directory(directory))
         {
             GADEN_ERROR("Path '{}' is not a directory.", directory.c_str());
-            return std::nullopt;
+            return nullptr;
         }
-        EnvironmentConfiguration config;
+        auto config = std::make_shared<EnvironmentConfiguration>();
 
         std::filesystem::path envPath = directory / "OccupancyGrid3D.csv";
-        if (config.environment.ReadFromFile(envPath) == ReadResult::NO_FILE)
+        if (config->environment.ReadFromFile(envPath) == ReadResult::NO_FILE)
         {
             GADEN_INFO("Could not read environment file '{}'. Preprocessing is needed.", envPath.c_str());
-            return std::nullopt;
+            return nullptr;
         }
 
         std::vector<std::filesystem::path> windFiles = paths::GetAllFilesInDirectory(directory / "wind");
         if (windFiles.empty())
             GADEN_WARN("No wind files in directory '{}'", directory.c_str());
 
-        config.windSequence.Initialize(windFiles, config.environment.numCells(), {}); // defaults to no looping
+        config->windSequence.Initialize(windFiles, config->environment.numCells(), {}); // defaults to no looping
 
+        config->localAirflowDisturbances.resize(config->environment.numCells(), {0, 0, 0});
+        
         return config;
     }
 

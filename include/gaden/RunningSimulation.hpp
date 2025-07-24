@@ -19,11 +19,11 @@ namespace gaden
             float filamentPPMcenter_initial = 20; //[ppm] Gas concentration at the center of the 3D gaussian (filament)
             float filamentInitialSigma = 10.0;    //[cm] Sigma of the filament at t=0-> 3DGaussian shape
             float filamentGrowthGamma = 10.0;     //[cm²/s] Growth ratio of the filament_std
-            float filamentNoise_std = 0.01;       // STD to add some "variablity" to the filament location
+            float filamentNoise_std = 0.02;       // STD to add some "variablity" to the filament location
             float numFilaments_sec = 10;          // How many filaments to release per second
             size_t expectedNumIterations = 600;   // To give initial size to filament vector. If you run the simulator longer than this, there will be a reallocation -- so, bad for performance :_(
 
-            LoopConfig windLoop;
+            std::optional<LoopConfig> windLoop; // if this is not null, the simulation advances the wind sequence as time passes
 
             // you can query the simulation as it runs, or store the state of the gas dispersion to disk and play it back later
             bool saveResults = false;
@@ -37,7 +37,8 @@ namespace gaden
         };
 
     public:
-        RunningSimulation(Parameters params, EnvironmentConfiguration const& envConfig);
+        RunningSimulation(Parameters params, std::shared_ptr<EnvironmentConfiguration> const& envConfig);
+        ~RunningSimulation(); // we need to declare a destructor because of the unique_ptr to incomplete type (GPUAcc)
         void AdvanceTimestep() override;
         const std::vector<Filament>& GetFilaments() const override;
         float GetCurrentTime() { return currentTime; }
@@ -45,20 +46,17 @@ namespace gaden
 
         Vector3 SampleWind(const Vector3i& indices) const override;
 
-    public:
-        std::vector<Vector3> localAirflowDisturbances; // small-scale changes to airflow that happen at runtime.
-                                                       // To be modified from the outside according to whatever model the user code wants to employ.
-                                                       // See AirflowDisturbance.hpp
-
     private:
         void AddFilaments();
         void MoveFilaments();
-        void MoveSingleFilament(Filament& filament);
+        void MoveSingleFilament(size_t i);
         Environment::CellState StepTowards(Filament& filament, Vector3 end);
         void SaveResults();
 
         // Only used in preCalculateConcentrations mode
-        void UpdateConcentrations();
+        void UpdateConcentrationsCPU();
+        void UpdateConcentrationsGPU();
+        void GetAABB(Filament const& filament, Vector3i& min, Vector3i& max);
 
     private:
         Parameters parameters;
@@ -71,6 +69,7 @@ namespace gaden
         std::vector<Filament> filaments2;
         std::vector<Filament>* activeFilaments;
         std::vector<Filament>* auxFilamentsVector;
+        std::vector<uint8_t> isActive;
 
         float currentTime = 0.0;
         size_t currentIteration = 0;
@@ -83,5 +82,9 @@ namespace gaden
         size_t last_saved_step = 0;
         std::vector<uint8_t> rawBuffer;
         std::vector<uint8_t> compressedBuffer;
+
+        // these can only be used if GPU_ACCELERATION=1
+        std::unique_ptr<class GPUAcceleration> gpuAcc;
+        std::vector<class ComputeConcentrationCommand> gpuCommands;
     };
 } // namespace gaden

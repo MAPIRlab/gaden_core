@@ -1,5 +1,6 @@
 #pragma once
 #include <fstream>
+#include <gaden/internal/compression.hpp>
 #include <string.h>
 #include <string>
 #include <vector>
@@ -12,8 +13,18 @@ namespace gaden
         // maximum size that the data can take pre-compression. We fix this here so that the PlaybackSimulation can know the upper bound of the uncompressed size and allocate its buffer accordingly
         inline constexpr size_t defaultBufferSize = 5e6;
 
-        // used as an uncompressed header for the result files produced by RunningSimulation (after 3.0)
-        inline const char resultHeader[] = "GADEN_RESULT";
+        // used in the uncompressed header for the result files produced by RunningSimulation (after 3.0)
+        // format of the header is: 
+        // ID[13] CompressionMode[8] UncompressedSize[64]
+        inline const char resultIdentifier[] = "GADEN_RESULT";
+
+        // written right after the header in post-3.0 files
+        enum class CompressionMode : uint8_t
+        {
+            UNCOMPRESSED = 0,
+            ZLIB = 1,
+            LIBBSC = 2
+        };
 
         class BufferWriter
         {
@@ -30,8 +41,8 @@ namespace gaden
             void Write(T* address)
             {
                 static_assert(std::is_trivially_copyable_v<T>,
-                      "Type is not trivially copyable! If your type contains dynamic memory (strings, vectors, etc) you must explicitly define how to serialize it");
-        
+                              "Type is not trivially copyable! If your type contains dynamic memory (strings, vectors, etc) you must explicitly define how to serialize it");
+
                 Write(address, sizeof(T));
             }
 
@@ -80,10 +91,10 @@ namespace gaden
 
             template <typename T>
             void Read(T* address)
-            { 
+            {
                 static_assert(std::is_trivially_copyable_v<T>,
-                      "Type is not trivially copyable! If your type contains dynamic memory (strings, vectors, etc) you must explicitly define how to serialize it");
-        
+                              "Type is not trivially copyable! If your type contains dynamic memory (strings, vectors, etc) you must explicitly define how to serialize it");
+
                 Read(address, sizeof(T));
             }
 
@@ -157,33 +168,59 @@ namespace gaden
         inline bool IsModernResultsFile(std::ifstream& fileStream)
         {
             size_t size = TotalFileSize(fileStream);
-            if (size < sizeof(resultHeader))
+            if (size < sizeof(resultIdentifier))
                 return false;
             size_t pos = fileStream.tellg();
 
             // reade the data from the file
             fileStream.seekg(0, std::ios_base::beg);
             std::string contents;
-            contents.resize(sizeof(resultHeader) - 1); // minus the null termination
+            contents.resize(sizeof(resultIdentifier) - 1); // minus the null termination
             fileStream.read(contents.data(), contents.length());
 
             // return the stream read position to where it was
             fileStream.seekg(pos);
 
-            return contents == resultHeader;
+            return contents == resultIdentifier;
         }
+
+        inline void SkipGadenHeader(std::ifstream& fileStream)
+        {
+            if (IsModernResultsFile(fileStream))
+            {
+                fileStream.seekg(0);
+                fileStream.seekg(sizeof(resultIdentifier),std::ios_base::cur);
+                fileStream.seekg(sizeof(CompressionMode),std::ios_base::cur);
+                fileStream.seekg(sizeof(size_t),std::ios_base::cur);
+            }
+        }
+
+        struct FileCompressionMetadata
+        {
+            CompressionMode mode;
+            size_t uncompressedSize;
+        };
 
         // modern files contain this data. Old files do not, so this will just return the default max buffer size (which, to be fair, should always be enough)
-        // the read position of the stream is left at the start of the compressed data, ready for the main read
-        inline size_t SizeRequiredToUncompress(std::ifstream& fileStream)
+        inline FileCompressionMetadata GetCompressionMetadata(std::ifstream& fileStream)
         {
             if (!IsModernResultsFile(fileStream))
-                return defaultBufferSize;
+                return {CompressionMode::ZLIB, defaultBufferSize};
 
-            fileStream.seekg(sizeof(resultHeader), std::ios_base::beg);
+            size_t pos = fileStream.tellg();
+            fileStream.seekg(0);
+
+            fileStream.seekg(sizeof(resultIdentifier));
+
+            CompressionMode mode;
+            fileStream.read((char*)&mode, sizeof(mode));
+
             size_t size;
-            fileStream.read((char*)&size, sizeof(size));
-            return size;
+            fileStream.read((char*)&size, sizeof(size_t));
+            fileStream.seekg(pos);
+
+            return {mode, size};
         }
+
     } // namespace serialization
 } // namespace gaden

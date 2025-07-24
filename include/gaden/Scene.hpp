@@ -11,7 +11,7 @@ namespace gaden
         std::vector<PlaybackSimulation::Parameters> params;
         std::vector<Color> gasDisplayColors;
         LoopConfig loop;
-        void ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot);
+        bool ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot);
         void WriteToYAML(std::filesystem::path const& path);
     };
 
@@ -19,14 +19,16 @@ namespace gaden
     {
         std::vector<RunningSimulation::Parameters> params;
         std::vector<Color> gasDisplayColors;
-        void ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot);
+        LoopConfig loop;
+        bool ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot);
+        void WriteToYAML(std::filesystem::path const& path);
     };
 
     class Scene
     {
     public:
-        Scene(PlaybackSceneMetadata const& metadata, EnvironmentConfiguration const& env);
-        Scene(RunningSceneMetadata const& metadata, EnvironmentConfiguration const& env);
+        Scene(PlaybackSceneMetadata const& metadata, std::shared_ptr<EnvironmentConfiguration> const& env);
+        Scene(RunningSceneMetadata const& metadata, std::shared_ptr<EnvironmentConfiguration> const& env);
         void AdvanceTimestep();
         Vector3 SampleWind(Vector3 const& point) const;
         std::map<GasType, float> SampleConcentrations(Vector3 const& point) const;

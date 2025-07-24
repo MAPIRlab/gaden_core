@@ -2,12 +2,11 @@
 #include "gaden/internal/Serialization.hpp"
 #include <fstream>
 #include <gaden/PlaybackSimulation.hpp>
-#include <gaden/internal/compression.hpp>
 
 namespace gaden
 {
 
-    PlaybackSimulation::PlaybackSimulation(Parameters params, EnvironmentConfiguration const& config, LoopConfig loop)
+    PlaybackSimulation::PlaybackSimulation(Parameters params, std::shared_ptr<EnvironmentConfiguration> const& config, LoopConfig loop)
         : Simulation(config), parameters(params), loopConfig(loop)
     {
         currentIteration = parameters.startIteration;
@@ -39,8 +38,17 @@ namespace gaden
 
         // calculate the buffer sizes and resize if needed
         std::ifstream infile(filename, std::ios_base::binary);
-        size_t uncompressedSize = serialization::SizeRequiredToUncompress(infile);
+        bool isModernFile = serialization::IsModernResultsFile(infile);
+        serialization::FileCompressionMetadata compressionMetadata = serialization::GetCompressionMetadata(infile);
+
+        // figure out how the file was compressed. Old files always used DEFLATE (zlib), but new ones have an enum in the header
+        serialization::SkipGadenHeader(infile);
+
+        // size the buffers
         size_t compressedSize = serialization::RemainingFileSize(infile);
+        // uncompressed files
+        if (compressionMetadata.uncompressedSize == 0)
+            compressionMetadata.uncompressedSize = compressedSize;
 
         if (compressedBuffer.size() < compressedSize)
         {
@@ -49,42 +57,46 @@ namespace gaden
             GADEN_INFO("Resizing compressedBuffer to {} bytes", newSize);
         }
 
-        if (rawBuffer.size() < uncompressedSize)
+        if (rawBuffer.size() < compressionMetadata.uncompressedSize)
         {
-            size_t newSize = uncompressedSize * 1.5;
+            size_t newSize = compressionMetadata.uncompressedSize * 1.5;
             rawBuffer.resize(newSize);
             GADEN_INFO("Resizing rawBuffer to {} bytes", newSize);
         }
 
         // read the file
-        // the stream position is set to the start of the compressed area (even in modern files with an uncompressed header) by SizeRequiredToUncompress()
+        // the stream position is set to the start of the compressed area (even in modern files with an uncompressed header)
         infile.read((char*)compressedBuffer.data(), compressedSize);
         infile.close();
 
         // decompress the contents
-        zlib::uLongf bufferSize = rawBuffer.size();
-        zlib::uncompress(rawBuffer.data(), &uncompressedSize, compressedBuffer.data(), compressedBuffer.size());
+        if (compressionMetadata.mode == serialization::CompressionMode::LIBBSC)
+            LibBSC::Decompress(compressedBuffer.data(), rawBuffer.data());
+        else if (compressionMetadata.mode == serialization::CompressionMode::ZLIB)
+            zlib::uncompress(rawBuffer.data(), &compressionMetadata.uncompressedSize, compressedBuffer.data(), compressedBuffer.size());
+        else
+            memcpy(rawBuffer.data(), compressedBuffer.data(), compressionMetadata.uncompressedSize);
 
-        serialization::BufferReader reader((char*)rawBuffer.data(), uncompressedSize);
+        serialization::BufferReader reader((char*)rawBuffer.data(), compressionMetadata.uncompressedSize);
 
         // check the version of gaden used to generate the file
-        reader.Read(&config.environment.versionMajor);
-        if (config.environment.versionMajor == 1)
+        reader.Read(&config->environment.versionMajor);
+        if (config->environment.versionMajor == 1)
         {
-            config.environment.versionMinor = 0; // pre 2.0 files had no minor version
+            config->environment.versionMinor = 0; // pre 2.0 files had no minor version
             LoadLogfileVersion1(reader);
         }
-        else if (config.environment.versionMajor == 2)
+        else if (config->environment.versionMajor == 2)
         {
-            reader.Read(&config.environment.versionMinor, sizeof(int));
-            if (config.environment.versionMinor <= 5)
+            reader.Read(&config->environment.versionMinor, sizeof(int));
+            if (config->environment.versionMinor <= 5)
                 LoadLogfileVersionPre2_6(reader);
             else
                 LoadLogfileVersion2_6(reader);
         }
         else
         {
-            reader.Read(&config.environment.versionMinor, sizeof(int));
+            reader.Read(&config->environment.versionMinor, sizeof(int));
             LoadLogfile(reader);
         }
         currentIteration++;
@@ -100,13 +112,13 @@ namespace gaden
 
     void PlaybackSimulation::LoadLogfile(serialization::BufferReader reader)
     {
-        reader.Read(&config.environment.description);
+        reader.Read(&config->environment.description);
         GasSource::DeserializeBinary(reader, simulationMetadata.source);
         reader.Read(&simulationMetadata.constants);
 
         int windIndex;
         reader.Read(&windIndex, sizeof(int));
-        config.windSequence.SetCurrentIndex(windIndex);
+        config->windSequence.SetCurrentIndex(windIndex);
 
         std::string modeStr;
         reader.ReadString(&modeStr);
@@ -124,7 +136,7 @@ namespace gaden
             {
                 GADEN_INFO("Simulation was generated with pre-calculated concentrations");
                 concentrations.emplace();
-                concentrations->resize(config.environment.numCells(), 0.0);
+                concentrations->resize(config->environment.numCells(), 0.0);
             }
             reader.ReadVector(&(*concentrations));
         }
@@ -156,21 +168,21 @@ namespace gaden
         // coordinates were initially written as doubles, but we want to read them as floats now, so we need a buffer
         double bufferDoubles[5];
         reader.Read(&bufferDoubles, 3 * sizeof(double));
-        config.environment.description.minCoord.x = bufferDoubles[0];
-        config.environment.description.minCoord.y = bufferDoubles[1];
-        config.environment.description.minCoord.z = bufferDoubles[2];
+        config->environment.description.minCoord.x = bufferDoubles[0];
+        config->environment.description.minCoord.y = bufferDoubles[1];
+        config->environment.description.minCoord.z = bufferDoubles[2];
 
         reader.Read(&bufferDoubles, 3 * sizeof(double));
-        config.environment.description.maxCoord.x = bufferDoubles[0];
-        config.environment.description.maxCoord.y = bufferDoubles[1];
-        config.environment.description.maxCoord.z = bufferDoubles[2];
+        config->environment.description.maxCoord.x = bufferDoubles[0];
+        config->environment.description.maxCoord.y = bufferDoubles[1];
+        config->environment.description.maxCoord.z = bufferDoubles[2];
 
-        reader.Read(&config.environment.description.dimensions.x, sizeof(int));
-        reader.Read(&config.environment.description.dimensions.y, sizeof(int));
-        reader.Read(&config.environment.description.dimensions.z, sizeof(int));
+        reader.Read(&config->environment.description.dimensions.x, sizeof(int));
+        reader.Read(&config->environment.description.dimensions.y, sizeof(int));
+        reader.Read(&config->environment.description.dimensions.z, sizeof(int));
 
         reader.Read(&bufferDoubles, 3 * sizeof(double));
-        config.environment.description.cellSize = bufferDoubles[0];
+        config->environment.description.cellSize = bufferDoubles[0];
 
         reader.Read(&bufferDoubles, 3 * sizeof(double)); // ground truth source position, we can ignore it
 
@@ -188,7 +200,7 @@ namespace gaden
 
         int windIndex;
         reader.Read(&windIndex, sizeof(int));
-        config.windSequence.SetCurrentIndex(windIndex);
+        config->windSequence.SetCurrentIndex(windIndex);
 
         activeFilaments.clear();
         int filament_index;
@@ -208,7 +220,7 @@ namespace gaden
     void PlaybackSimulation::LoadLogfileVersionPre2_6(serialization::BufferReader reader)
     {
         mode = Mode::Filaments;
-        reader.Read(&config.environment.description, sizeof(config.environment.description));
+        reader.Read(&config->environment.description, sizeof(config->environment.description));
         gaden::Vector3 source_position;
         reader.Read(&source_position, sizeof(gaden::Vector3));
 
@@ -227,7 +239,7 @@ namespace gaden
 
         int windIndex;
         reader.Read(&windIndex, sizeof(int));
-        config.windSequence.SetCurrentIndex(windIndex);
+        config->windSequence.SetCurrentIndex(windIndex);
 
         activeFilaments.clear();
         int filament_index;
@@ -247,7 +259,7 @@ namespace gaden
     void PlaybackSimulation::LoadLogfileVersion2_6(serialization::BufferReader reader)
     {
         mode = Mode::Filaments;
-        reader.Read(&config.environment.description);
+        reader.Read(&config->environment.description);
 
         if (!simulationMetadata.source)
             simulationMetadata.source = std::make_shared<PointSource>();
@@ -255,7 +267,7 @@ namespace gaden
 
         int windIndex;
         reader.Read(&windIndex, sizeof(int));
-        config.windSequence.SetCurrentIndex(windIndex);
+        config->windSequence.SetCurrentIndex(windIndex);
 
         activeFilaments.clear();
         int filament_index;

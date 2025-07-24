@@ -4,30 +4,41 @@
 
 namespace gaden
 {
-    void PlaybackSceneMetadata::ReadFromYAML(std::filesystem::path const& yamlPath, std::filesystem::path const& EnvConfigurationMetadataRoot)
+    bool PlaybackSceneMetadata::ReadFromYAML(std::filesystem::path const& yamlPath, std::filesystem::path const& EnvConfigurationMetadataRoot)
     {
-        YAML::Node yaml = YAML::LoadFile(yamlPath);
-
-        size_t startIteration = yaml["playback_initial_iteration"].as<size_t>();
-        loop = ParseLoopYAML(yaml["playback_loop"]);
-        YAML::Node simulations = yaml["simulations"];
-
-        params.resize(simulations.size());
-        gasDisplayColors.resize(simulations.size());
-        for (size_t i = 0; i < simulations.size(); i++)
+        try
         {
-            params.at(i).startIteration = startIteration;
-            params.at(i).resultsDirectory = EnvConfigurationMetadataRoot / "simulations" / simulations[i]["sim"].as<std::string>() / "result";
+            YAML::Node yaml = YAML::LoadFile(yamlPath);
 
-            Vector3 color_vec{0.4, 0.4, 0.4}; // default
-            if (YAML::Node node = simulations[i]["gas_color"])
-                color_vec = node.as<Vector3>();
+            size_t startIteration = yaml["playback_initial_iteration"].as<size_t>();
 
-            gasDisplayColors.at(i).r = color_vec[0];
-            gasDisplayColors.at(i).g = color_vec[1];
-            gasDisplayColors.at(i).b = color_vec[2];
-            gasDisplayColors.at(i).a = 1;
+            std::optional<LoopConfig> loopConfig = ParseLoopYAML(yaml["playback_loop"]);
+            loop = loopConfig ? *loopConfig : LoopConfig{};
+            YAML::Node simulations = yaml["simulations"];
+
+            params.resize(simulations.size());
+            gasDisplayColors.resize(simulations.size());
+            for (size_t i = 0; i < simulations.size(); i++)
+            {
+                params.at(i).startIteration = startIteration;
+                params.at(i).resultsDirectory = EnvConfigurationMetadataRoot / "simulations" / simulations[i]["sim"].as<std::string>() / "result";
+
+                Vector3 color_vec{0.4, 0.4, 0.4}; // default
+                if (YAML::Node node = simulations[i]["gas_color"])
+                    color_vec = node.as<Vector3>();
+
+                gasDisplayColors.at(i).r = color_vec[0];
+                gasDisplayColors.at(i).g = color_vec[1];
+                gasDisplayColors.at(i).b = color_vec[2];
+                gasDisplayColors.at(i).a = 1;
+            }
         }
+        catch (std::exception const& e)
+        {
+            GADEN_ERROR("Error parsing scene file '{}':\n\t{}", yamlPath, e.what());
+            return false;
+        }
+        return true;
     }
 
     void PlaybackSceneMetadata::WriteToYAML(std::filesystem::path const& path)
@@ -61,33 +72,73 @@ namespace gaden
         file.close();
     }
 
-    void RunningSceneMetadata::ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot)
+    bool RunningSceneMetadata::ReadFromYAML(std::filesystem::path const& path, std::filesystem::path const& projectRoot)
     {
-        YAML::Node yaml = YAML::LoadFile(path);
-
-        size_t startIteration = yaml["playback_initial_iteration"].as<size_t>();
-        LoopConfig loop = ParseLoopYAML(yaml["playback_loop"]);
-        YAML::Node simulations = yaml["simulations"];
-
-        params.resize(simulations.size());
-        gasDisplayColors.resize(simulations.size());
-        for (size_t i = 0; i < simulations.size(); i++)
+        try
         {
-            std::string filePath = projectRoot / "simulations" / simulations[i]["sim"].as<std::string>() / "sim.yaml";
-            params.at(i).ReadFromYAML(filePath);
+            YAML::Node yaml = YAML::LoadFile(path);
+            YAML::Node simulations = yaml["simulations"];
 
-            Vector3 color_vec{0.4, 0.4, 0.4}; // default
-            if (YAML::Node node = simulations[i]["gas_color"])
-                color_vec = node.as<Vector3>();
+            std::optional<LoopConfig> loopConfig = ParseLoopYAML(yaml["playback_loop"]);
+            loop = loopConfig ? *loopConfig : LoopConfig{};
 
-            gasDisplayColors.at(i).r = color_vec[0];
-            gasDisplayColors.at(i).g = color_vec[1];
-            gasDisplayColors.at(i).b = color_vec[2];
-            gasDisplayColors.at(i).a = 1;
+            params.resize(simulations.size());
+            gasDisplayColors.resize(simulations.size());
+            for (size_t i = 0; i < simulations.size(); i++)
+            {
+                std::string filePath = projectRoot / "simulations" / simulations[i]["sim"].as<std::string>() / "sim.yaml";
+                params.at(i).ReadFromYAML(filePath);
+
+                if (i != 0)
+                    params.at(i).windLoop = std::nullopt; // when using a scene, each individual simulations cannot control the wind sequence, as it is shared
+
+                Vector3 color_vec{0.4, 0.4, 0.4}; // default
+                if (YAML::Node node = simulations[i]["gas_color"])
+                    color_vec = node.as<Vector3>();
+
+                gasDisplayColors.at(i).r = color_vec[0];
+                gasDisplayColors.at(i).g = color_vec[1];
+                gasDisplayColors.at(i).b = color_vec[2];
+                gasDisplayColors.at(i).a = 1;
+            }
         }
+        catch (std::exception const& e)
+        {
+            GADEN_ERROR("Error parsing scene file '{}':\n\t{}", path, e.what());
+            return false;
+        }
+        return true;
     }
 
-    Scene::Scene(PlaybackSceneMetadata const& metadata, EnvironmentConfiguration const& env)
+    void RunningSceneMetadata::WriteToYAML(std::filesystem::path const& path)
+    {
+        std::ofstream file(path);
+        YAML::Emitter emitter(file);
+        emitter << YAML::BeginMap;
+
+        emitter << YAML::Key << "playback_initial_iteration" << YAML::Value;
+        emitter << 0;
+
+        emitter << YAML::Key << "playback_loop" << YAML::Value;
+        WriteLoopYAML(emitter, loop);
+
+        emitter << YAML::Key << "simulations" << YAML::Value << YAML::Block << YAML::BeginSeq;
+        for (size_t i = 0; i < params.size(); i++)
+        {
+            emitter << YAML::BeginMap;
+            std::string name = params.at(i).saveDataDirectory.parent_path().stem();
+            emitter << YAML::Key << "sim" << YAML::Value << name;
+            emitter << YAML::Key << "gas_color" << YAML::Value << YAML::Flow << Vector3(.4, .4, .4);
+            emitter << YAML::EndMap;
+        }
+        emitter << YAML::EndSeq;
+
+        emitter << YAML::EndMap;
+
+        file.close();
+    }
+
+    Scene::Scene(PlaybackSceneMetadata const& metadata, std::shared_ptr<EnvironmentConfiguration> const& env)
     {
         GADEN_VERIFY(!metadata.params.empty(), "Cannot create an empty playback scene");
         for (size_t i = 0; i < metadata.params.size(); i++)
@@ -98,14 +149,16 @@ namespace gaden
         }
     }
 
-    Scene::Scene(RunningSceneMetadata const& metadata, EnvironmentConfiguration const& env)
+    Scene::Scene(RunningSceneMetadata const& metadata, std::shared_ptr<EnvironmentConfiguration> const& env)
     {
         GADEN_VERIFY(!metadata.params.empty(), "Cannot create an empty running scene");
+        float dt = metadata.params.at(0).deltaTime;
         for (size_t i = 0; i < metadata.params.size(); i++)
         {
             simulations.push_back(std::make_shared<RunningSimulation>(metadata.params.at(i), env));
             auto& sim = simulations.back();
             sim->gasDisplayColor = metadata.gasDisplayColors.at(i);
+            GADEN_VERIFY(metadata.params.at(i).deltaTime == dt, "Cannot create scene with simulations that do not have the same deltaTime");
         }
     }
 

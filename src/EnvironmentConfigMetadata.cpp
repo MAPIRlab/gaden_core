@@ -29,19 +29,22 @@ namespace gaden
                 if (auto params = ParseSimulationFolder(sim))
                 {
                     std::string name = sim.stem();
-                    simulations[name] = params.value();
+                    simulations.insert(name);
                     GADEN_INFO("Found simulation configuration: {}", name);
                 }
             }
 
             // read the playback configurations
             std::vector<std::filesystem::path> playbackConfigs = paths::GetAllFilesInDirectory(rootDirectory / "scenes");
-            for (std::filesystem::path const& playbackFile : playbackConfigs)
+            for (std::filesystem::path const& sceneFile : playbackConfigs)
             {
                 PlaybackSceneMetadata metadata;
-                metadata.ReadFromYAML(playbackFile, rootDirectory);
-                scenes[playbackFile.stem()] = metadata;
-                GADEN_INFO("Found playback configuration: {}", playbackFile.stem());
+                bool ok = metadata.ReadFromYAML(sceneFile, rootDirectory);
+                if (ok)
+                {
+                    scenes.insert(sceneFile.stem());
+                    GADEN_INFO("Found playback configuration: {}", sceneFile.stem());
+                }
             }
         }
         catch (std::exception const& e)
@@ -185,6 +188,49 @@ namespace gaden
             return false;
         }
         return true;
+    }
+
+    EnvironmentConfigMetadata::SimulationParams EnvironmentConfigMetadata::GetSimulationParams(std::string const& name)
+    {
+        SimulationParams params;
+        params.ReadFromYAML(GetSimulationFilePath(name));
+        return params;
+    }
+
+    PlaybackSceneMetadata EnvironmentConfigMetadata::GetPlaybackScene(std::string const& name)
+    {
+        PlaybackSceneMetadata metadata;
+        std::filesystem::path sceneFile = GetSceneFilePath(name);
+        metadata.ReadFromYAML(sceneFile, rootDirectory);
+        return metadata;
+    }
+
+    RunningSceneMetadata EnvironmentConfigMetadata::GetRunningScene(std::string const& name)
+    {
+        RunningSceneMetadata metadata;
+        std::filesystem::path sceneFile = GetSceneFilePath(name);
+        metadata.ReadFromYAML(sceneFile, rootDirectory);
+        return metadata;
+    }
+
+    std::vector<std::string> EnvironmentConfigMetadata::GetSimulationNamesInScene(std::string const& sceneName)
+    {
+        std::filesystem::path sceneFile = GetSceneFilePath(sceneName);
+
+        std::vector<std::string> names;
+        try
+        {
+            RunningSceneMetadata metadata;
+            YAML::Node yaml = YAML::LoadFile(sceneFile);
+            YAML::Node simulations = yaml["simulations"];
+            for (size_t i = 0; i < simulations.size(); i++)
+                names.push_back(simulations[i]["sim"].as<std::string>());
+        }
+        catch (std::exception const& e)
+        {
+            GADEN_ERROR("Caught exception parsing scene file '{}':\n\t", sceneFile, e.what());
+        }
+        return names;
     }
 
     std::vector<std::filesystem::path> EnvironmentConfigMetadata::GetWindFiles() const

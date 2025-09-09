@@ -20,6 +20,7 @@ find_package(ZLIB REQUIRED)
 set(CMAKE_DEBUG_POSTFIX "") # to prevent linking errors with yaml-cpp if compiling in debug mode for the first time
 add_subdirectory(third_party/yaml-cpp)
 add_subdirectory(third_party/compute)
+set(BSC_BUILD_SHARED_LIB ON)
 add_subdirectory(third_party/libbsc)
 
 add_library(gaden SHARED

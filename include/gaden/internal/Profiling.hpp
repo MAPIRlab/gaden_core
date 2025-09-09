@@ -27,9 +27,14 @@ namespace gaden
 
         ~ScopedStopwatch()
         {
+            GADEN_INFO("{} - Ellapsed: {:.3f}s", name.c_str(), ellapsed());
+        }
+
+        double ellapsed() const
+        {
             auto nanoseconds = (clock.now() - start).count();
             double seconds = nanoseconds / 1e9;
-            GADEN_INFO("{} - Ellapsed: {:.3f}s", name.c_str(), seconds);
+            return seconds;
         }
 
     private:

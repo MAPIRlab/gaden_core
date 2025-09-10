@@ -3,8 +3,8 @@ execute_process(COMMAND cling-config --cmake OUTPUT_VARIABLE CPPYY_MODULE_PATH O
 message("CPYY_MODULE_PATH: " ${CPPYY_MODULE_PATH})
 list(INSERT CMAKE_MODULE_PATH 0 ${CPPYY_MODULE_PATH})
 
-find_package(Cppyy)
-find_package(LibClang)
+find_package(Cppyy REQUIRED)
+find_package(LibClang REQUIRED)
 
 # Note this is a necessary compile flag for cppyy bindings to work.
 set_target_properties(gaden PROPERTIES POSITION_INDEPENDENT_CODE ON)

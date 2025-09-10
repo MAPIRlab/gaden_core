@@ -32,13 +32,23 @@ target_link_libraries([your_exec] gaden)
 ## Python bindings
 You can generate Python bindings for the gaden core library with [cppyy](https://cppyy.readthedocs.io/en/latest/). To generate them, simply enable the corresponding option in the [CMakeLists.txt](CMakeLists.txt) before building.
 
-Creating these bindings requires the following dependencies:
+Creating these bindings requires setting up some dependencies first:
 
 ```
 pip install wheel
 pip install cppyy
-pip install libclang==13
-sudo apt install libclang-13-dev
+pip install libclang
+sudo apt install libclang-dev
+```
+
+When installing cppyy you might be prompted by a warning to add a specific path (like `/home/[user]/.local/bin` to your `PATH`). You should listen to it!
+
+If CMake complains about not being able to find libclang after the previous steps, you might need to manually create the `libclang.so` symlink:
+
+```
+# These steps are only required if CMake fails to find libclang.so
+sudo apt install llvm
+sudo ln -s $(llvm-config --prefix)/lib/libclang.so.1 $(llvm-config --prefix)/lib/libclang.so
 ```
 
 ### Usage example

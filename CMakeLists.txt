@@ -26,6 +26,7 @@ add_subdirectory(third_party/libbsc)
 add_library(gaden SHARED
     src/CoppeliaSim.cpp
     src/MVSim.cpp
+    src/Gazebo.cpp
     src/Environment.cpp
     src/EnvironmentConfiguration.cpp
     src/Scene.cpp

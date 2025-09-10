@@ -5,5 +5,5 @@
 
 namespace gaden
 {
-    void GenerateMVSimScene(Environment const& env, std::vector<Model3D> const& models, std::filesystem::path const& outputPath);
+    void GenerateMVSimScene(Environment const& env, std::vector<Model3D> const& models, std::filesystem::path const& outputFolder);
 }

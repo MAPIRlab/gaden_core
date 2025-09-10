@@ -21,14 +21,17 @@ namespace gaden
 
         for (auto const& model : models)
         {
-            file << R"(
-        <model name="walls">
+            file << fmt::format(
+                        "       <model name=\"{}\">", model.path.stem())
+                 <<
+                R"(
+        <static>true</static>
         <link name="link_0">
         <visual name="visual">
             <geometry>
             <mesh>
                 <uri>)";
-            file << model.path;
+            file << model.path.c_str();
             file << R"(</uri>
             </mesh>
             </geometry>
@@ -36,9 +39,8 @@ namespace gaden
         <collision name="collision_0">
             <geometry>
             <mesh>
-                <uri> 
-)";
-            file << model.path;
+                <uri>)";
+            file << model.path.c_str();
             file << R"(</uri>
             </mesh>
             </geometry>

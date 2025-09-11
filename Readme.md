@@ -3,6 +3,9 @@ Gaden is a gas dispersion simulator! This repo contains the backend core library
 
 See the [tutorial](examples/tutorial/) for basic info on the data types that this library defines and how to use them.
 
+## Video showcase
+[![Video showcase](https://img.youtube.com/vi/2i3_pyV-MYU/hqdefault.jpg)](https://youtu.be/2i3_pyV-MYU)
+
 ## Installation and building
 If you plan to use one of the frontends, don't download this repo separately. Instead, follow the instructions in the corresponding repo.
 
@@ -41,7 +44,7 @@ pip install libclang
 sudo apt install libclang-dev
 ```
 
-When installing cppyy you might be prompted by a warning to add a specific path (like `/home/[user]/.local/bin` to your `PATH`). You should listen to it!
+When installing cppyy you might be prompted by a warning to add a specific path (like `/home/[user]/.local/bin`) to your `PATH`. You should listen to it!
 
 If CMake complains about not being able to find libclang after the previous steps, you might need to manually create the `libclang.so` symlink:
 

@@ -28,8 +28,8 @@ A `PlaybackSimulation` can use the results from a `RunningSimulation` like this:
 
 ![envConfig](diagrams/PlaybackSimulation.png) 
 
-It is also possible to play back multiple simulations at the same time (in lockstep) with a `Scene`:
+It is also possible to run multiple simulations at the same time (in lockstep) with a `Scene`:
 
-![envConfig](diagrams/Scene.png) 
+![scenes](diagrams/Scene.png) 
 
 This requires that all simulations in the scene use the same `EnvironmentConfiguration`. Creating a `Scene` is an easy way to handle multi-source simulations, including the case where there are multiple types of gas in the environment at the same time.

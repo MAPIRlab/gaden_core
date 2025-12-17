@@ -10,7 +10,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # generate a python module with bindings to access the library from your python scripts
 set(GENERATE_PYTHON_BINDINGS OFF) # requires cppyy. See the readme!
 set(PROFILING OFF) # adds Tracy as a dependency
-set(GPU_ACCELERATION OFF) # compiles with support for GPU-based concentration calculation. Requires OpenCL
 
 find_package(OpenMP REQUIRED)
 find_package(fmt REQUIRED)
@@ -69,8 +68,9 @@ if(GENERATE_PYTHON_BINDINGS)
     include(cmake/PythonBindings.cmake)
 endif()
 
-if(GPU_ACCELERATION)
-    find_package(OpenCL REQUIRED)
+find_package(OpenCL QUIET)
+if(OpenCL_FOUND)
+    message("[gaden_core] Found OpenCL ${OpenCL_VERSION_MAJOR}.${OpenCL_VERSION_MINOR}. Compiling with GPU acceleration support.")
     target_compile_definitions(gaden PUBLIC GPU_ACCELERATION=1)
     target_link_libraries(gaden OpenCL::OpenCL)
 endif()

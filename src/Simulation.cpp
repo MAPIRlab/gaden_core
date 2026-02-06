@@ -86,6 +86,11 @@ namespace gaden
 
     Vector3 Simulation::SampleWind(const Vector3i& indices) const
     {
+        if (!config->environment.IsInBounds(indices))
+        {
+            GADEN_ERROR("Requested wind vector at a point outside the environment. Are you using the correct coordinates?");
+            return {0, 0, 0};
+        }
         return config->windSequence.GetCurrent().at(config->environment.indexFrom3D(indices));
     }
 

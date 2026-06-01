@@ -70,8 +70,8 @@ namespace gaden
             std::string line;
             struct ParsedLine
             {
-                float point[3];
-                float windVector[3];
+                Vector3 point;
+                Vector3 windVector;
             };
             ParsedLine parsedLine;
             float* firstPartOfLine;
@@ -83,13 +83,13 @@ namespace gaden
 
                 if (firstElement.find("Points") != std::string::npos)
                 {
-                    firstPartOfLine = parsedLine.point;
-                    secondPartOfLine = parsedLine.windVector;
+                    firstPartOfLine = &parsedLine.point.x;
+                    secondPartOfLine = &parsedLine.windVector.x;
                 }
                 else
                 {
-                    firstPartOfLine = parsedLine.windVector;
-                    secondPartOfLine = parsedLine.point;
+                    firstPartOfLine = &parsedLine.windVector.x;
+                    secondPartOfLine = &parsedLine.point.x;
                 }
             }
 
@@ -114,14 +114,16 @@ namespace gaden
                     }
 
                     // assign each of the points we have information about to the nearest cell
-                    Vector3i idx = env.coordsToIndices({parsedLine.point[0],
-                                                        parsedLine.point[1],
-                                                        parsedLine.point[2]});
+                    Vector3i idx = env.coordsToIndices(parsedLine.point);
+                    
+                    if(!env.IsInBounds(parsedLine.point))
+                    {
+                        GADEN_ERROR("Point {} is out of bounds", parsedLine.point);
+                        continue;
+                    }
 
                     size_t index3D = env.indexFrom3D(idx);
-                    wind[index3D] = {parsedLine.windVector[0],
-                                     parsedLine.windVector[1],
-                                     parsedLine.windVector[2]};
+                    wind.at(index3D) = parsedLine.windVector;
                 }
             }
 

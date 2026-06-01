@@ -1,6 +1,6 @@
 # Tutorial
 
-You can use the [example project](../example_project/) to learn how gaden works.
+You can use the [example project](../example_project/) to learn how gaden works. If you want instructions on how to generate the input data for gaden (the OpenFOAM point cloud), see the [original gaden tutorial](https://github.com/MAPIRlab/gaden/blob/humble/GADEN_tutorial.md).
 
 ## Environment Configuration
 The first step in running a simulation is to create an environment configuration, which represents a combination of environment geometry and airflow. You can build an `EnvironmentConfiguration` object in three ways, described by the following flow chart:

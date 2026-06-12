@@ -3,6 +3,20 @@ Gaden is a gas dispersion simulator! This repo contains the backend core library
 
 See the [tutorial](examples/tutorial/) for basic info on the data types that this library defines and how to use them.
 
+If you use gaden in your research, you can use the following `bib` citation:
+```
+@ARTICLE{gaden-rt-2025,
+    author = {Ojeda, Pepe and Monroy, Javier and Gonzalez-Jimenez, Javier},
+     title = {Gaden-RT: A Real Time and Interactive Gas Dispersion Simulator for Mobile Robotics},
+   journal = {SoftwareX},
+    volume = {32},
+      year = {2025},
+      issn = {2352-7110},
+       url = {https://www.sciencedirect.com/science/article/pii/S2352711025003541},
+       doi = {10.1016/j.softx.2025.102388}
+}
+```
+
 ## Video showcase
 [![Video showcase](https://img.youtube.com/vi/2i3_pyV-MYU/hqdefault.jpg)](https://youtu.be/2i3_pyV-MYU)
 

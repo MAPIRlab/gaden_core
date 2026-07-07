@@ -48,9 +48,9 @@ namespace gaden
         // fill in the environment cell grid
         //---------------------------------------
         Occupy(allObstacleTriangles, environment, Environment::CellState::Obstacle);
+        Fill(environment, emptyPoint);
         Occupy(allOutletTriangles, environment, Environment::CellState::Outlet);
 
-        Fill(environment, emptyPoint);
         return environment;
     }
 

@@ -1,5 +1,17 @@
+import os
 import sys
 from paraview.simple import *
+
+
+def is_decomposed_openfoam_case(foam_case):
+    case_dir = foam_case if os.path.isdir(foam_case) else os.path.dirname(os.path.abspath(foam_case))
+    if not case_dir:
+        return False
+    return any(
+        os.path.isdir(os.path.join(case_dir, d))
+        for d in os.listdir(case_dir)
+        if d.startswith("processor")
+    )
 
 
 def compute_sampling_dimensions(foam, resolution):
@@ -22,7 +34,12 @@ def main():
     resolution = 0.1 if len(sys.argv) < 4 else float(sys.argv[3])
 
     print(f"Reading file: {foam_case}...")
-    foam = OpenFOAMReader(FileName=[foam_case])
+    if is_decomposed_openfoam_case(foam_case):
+        CaseType = 'Decomposed Case'
+    else:
+        CaseType = 'Reconstructed Case'
+        
+    foam = OpenFOAMReader(FileName=[foam_case], CaseType=CaseType)
     foam.CellArrays = ['U']
 
     print(f"Resampling with resolution: {resolution}m... This could take a while.")
